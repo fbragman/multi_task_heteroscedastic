@@ -53,6 +53,11 @@ def __add_regression_args(parser):
     return parser
 
 
+def __add_multitask_args(parser):
+
+    ## add t
+
+
 def __add_segmentation_args(parser):
     parser.add_argument(
         "--num_classes",
@@ -181,5 +186,6 @@ SUPPORTED_ARG_SECTIONS = {
     'REGRESSION': __add_regression_args,
     'SEGMENTATION': __add_segmentation_args,
     'AUTOENCODER': __add_autoencoder_args,
-    'GAN': __add_gan_args
+    'GAN': __add_gan_args,
+    'MULTITASK': __add_multitask_args,
 }
