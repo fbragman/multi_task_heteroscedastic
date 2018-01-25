@@ -54,8 +54,53 @@ def __add_regression_args(parser):
 
 
 def __add_multitask_args(parser):
+    parser.add_argument(
+        "--loss_border",
+        metavar='',
+        help="Set the border size for the loss function to ignore",
+        type=int,
+        default=0)
 
-    ## add t
+    parser.add_argument(
+        "--num_classes_1",
+        metavar='',
+        help="Set number of classes for task1",
+        type=int,
+        default=-1)
+
+    parser.add_argument(
+        "--num_classes_2",
+        metavar='',
+        help="Set number of classes for task2",
+        type=int,
+        default=-1)
+
+    parser.add_argument(
+        "--loss_1",
+        metavar='TYPE_STR',
+        help="[Training only] loss function for task 1 type_str",
+        default='CrossEntropy')
+
+    parser.add_argument(
+        "--loss_2",
+        metavar='TYPE_STR',
+        help="[Training only] loss function for task 2 type_str",
+        default='L2Loss')
+
+    parser.add_argument(
+        "--output_prob",
+        metavar='',
+        help="[Inference only] whether to output multi-class probabilities",
+        type=str2boolean,
+        default=False)
+
+    parser.add_argument(
+        "--label_normalisation",
+        metavar='',
+        help="whether to map unique labels in the training set to "
+             "consecutive integers (the smallest label will be  mapped to 0)",
+        type=str2boolean,
+        default=False)
 
 
 def __add_segmentation_args(parser):
