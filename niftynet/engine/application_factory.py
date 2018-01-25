@@ -26,6 +26,8 @@ SUPPORTED_APP = {
         'niftynet.application.autoencoder_application.AutoencoderApplication',
     'net_gan':
         'niftynet.application.gan_application.GANApplication',
+    'net_multitask_segsyn':
+        'niftynet.application.multitask_application.MultitaskApplication',
 }
 
 SUPPORTED_NETWORK = {
@@ -34,6 +36,10 @@ SUPPORTED_NETWORK = {
         'niftynet.network.simulator_gan.SimulatorGAN',
     'simple_gan':
         'niftynet.network.simple_gan.SimpleGAN',
+
+    # Multi-Task
+    "multitask-highres3dnet":
+        'niftynet.network.multitask_highres3dnet.MTHighRes3DNet',
 
     # Segmentation
     "highres3dnet":
@@ -86,6 +92,21 @@ SUPPORTED_LOSS_SEGMENTATION = {
         'niftynet.layer.loss_segmentation.l2_loss',
     "Huber":
         'niftynet.layer.loss_segmentation.huber_loss'
+}
+
+SUPPORTED_LOSS_MULTITASK = {
+    'CrossEntropy':
+        'niftynet.layer.loss_segmentation.cross_entropy',
+    "L1Loss":
+        'niftynet.layer.loss_regression.l1_loss',
+    "L2Loss":
+        'niftynet.layer.loss_regression.l2_loss',
+    "RMSE":
+        'niftynet.layer.loss_regression.rmse_loss',
+    "MAE":
+        'niftynet.layer.loss_regression.mae_loss',
+    "Huber":
+        'niftynet.layer.loss_regression.huber_loss'
 }
 
 SUPPORTED_LOSS_REGRESSION = {
@@ -232,6 +253,15 @@ class LossSegmentationFactory(ModuleFactory):
     """
     SUPPORTED = SUPPORTED_LOSS_SEGMENTATION
     type_str = 'segmentation loss'
+
+
+class LossMultiTaskFactory(ModuleFactory):
+    """
+    Import a multi-task loss function from ``niftynet.layer`` or
+    from user specified string
+    """
+    SUPPORTED = SUPPORTED_LOSS_MULTITASK
+    type_str = 'multitask loss'
 
 
 class LossRegressionFactory(ModuleFactory):
