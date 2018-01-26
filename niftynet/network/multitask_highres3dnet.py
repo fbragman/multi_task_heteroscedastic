@@ -27,8 +27,7 @@ class MTHighRes3DNet(BaseNet):
     # standard Bernouilli drop-out used with p = 0.5 in the fully connected layers
 
     def __init__(self,
-                 num_classes_1,
-                 num_classes_2,
+                 num_classes,
                  w_initializer=None,
                  w_regularizer=None,
                  b_initializer=None,
@@ -37,8 +36,7 @@ class MTHighRes3DNet(BaseNet):
                  name='MTHighRes3DNet'):
 
         super(MTHighRes3DNet, self).__init__(
-            num_classes_1=num_classes_1,
-            num_classes_2=num_classes_2,
+            num_classes=num_classes,
             w_initializer=w_initializer,
             w_regularizer=w_regularizer,
             b_initializer=b_initializer,
@@ -56,8 +54,8 @@ class MTHighRes3DNet(BaseNet):
             {'name': 'task_1_fc_2', 'n_features': 40, 'kernel_size': 1},
             {'name': 'task_2_fc_1', 'n_features': 40, 'kernel_size': 1},
             {'name': 'task_2_fc_2', 'n_features': 40, 'kernel_size': 1},
-            {'name': 'task_1_fc_out', 'n_features': num_classes_1, 'kernel_size': 1},
-            {'name': 'task_2_fc_out', 'n_features': num_classes_2, 'kernel_size': 1}]
+            {'name': 'task_1_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
+            {'name': 'task_2_fc_out', 'n_features': num_classes[1], 'kernel_size': 1}]
 
     def layer_op(self, images, is_training, layer_id=-1):
         assert layer_util.check_spatial_dims(
@@ -202,7 +200,7 @@ class MTHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_1 = fc_layer(flow_task_1, is_training)
+        flow_task_1 = fc_layer(flow_task_1, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task_1))
 
         ###### OUTPUT TASK 2 ######
@@ -216,7 +214,7 @@ class MTHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_2 = fc_layer(flow_task_2, is_training)
+        flow_task_2 = fc_layer(flow_task_2, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task_2))
 
         # set training properties
