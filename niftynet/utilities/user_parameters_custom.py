@@ -62,17 +62,9 @@ def __add_multitask_args(parser):
         default=0)
 
     parser.add_argument(
-        "--num_classes_1",
-        metavar='',
-        help="Set number of classes for task1",
-        type=int,
-        default=-1)
-
-    parser.add_argument(
-        "--num_classes_2",
-        metavar='',
-        help="Set number of classes for task2",
-        type=int,
+        "--num_classes",
+        help="Set number of classes for each task",
+        type=int_array,
         default=-1)
 
     parser.add_argument(
@@ -101,6 +93,18 @@ def __add_multitask_args(parser):
              "consecutive integers (the smallest label will be  mapped to 0)",
         type=str2boolean,
         default=False)
+
+    parser.add_argument(
+        "--loss_sigma_1",
+        help='Initial value for task 1 homoscedatic noise',
+        type=float,
+        default=1)
+
+    parser.add_argument(
+        "--loss_sigma_2",
+        help='Initial value for task 2 homoscedatic noise',
+        type=float,
+        default=1)
 
 
 def __add_segmentation_args(parser):
