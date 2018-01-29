@@ -307,20 +307,27 @@ class MultiTaskApplication(BaseApplication):
                 average_over_devices=True, summary_type='scalar',
                 collection=TF_SUMMARIES)
 
+            if multitask_loss == 'homoscedatic_1':
+
+                outputs_collector.add_to_collection(
+                    var=w_1, name='sigma_1',
+                    average_over_devices=True, summary_type='scalar',
+                    collection=TF_SUMMARIES)
+
+                outputs_collector.add_to_collection(
+                    var=w_2, name='sigma_2',
+                    average_over_devices=True, summary_type='scalar',
+                    collection=TF_SUMMARIES)
+
         else:
+            # Don't need to since niftynet will just output (hopefully) a A x B x C x task_number image
             data_dict = switch_sampler(for_training=False)
             image = tf.cast(data_dict['image'], tf.float32)
-
-            # multi-output
             net_out = self.net(image, is_training=self.is_training)
-            net_out_task_1 = net_out[0]
-            net_out_task_2 = net_out[1]
 
             crop_layer = CropLayer(border=0, name='crop-88')
             post_process_layer = PostProcessingLayer('IDENTITY')
-
-            net_out_task_1 = post_process_layer(crop_layer(net_out_task_1))
-            net_out_task_2 = post_process_layer(crop_layer(net_out_task_2))
+            net_out = post_process_layer(crop_layer(net_out))
 
             outputs_collector.add_to_collection(
                 var=net_out, name='window',
