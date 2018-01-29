@@ -310,11 +310,17 @@ class MultiTaskApplication(BaseApplication):
         else:
             data_dict = switch_sampler(for_training=False)
             image = tf.cast(data_dict['image'], tf.float32)
+
+            # multi-output
             net_out = self.net(image, is_training=self.is_training)
+            net_out_task_1 = net_out[0]
+            net_out_task_2 = net_out[1]
 
             crop_layer = CropLayer(border=0, name='crop-88')
             post_process_layer = PostProcessingLayer('IDENTITY')
-            net_out = post_process_layer(crop_layer(net_out))
+
+            net_out_task_1 = post_process_layer(crop_layer(net_out_task_1))
+            net_out_task_2 = post_process_layer(crop_layer(net_out_task_2))
 
             outputs_collector.add_to_collection(
                 var=net_out, name='window',
