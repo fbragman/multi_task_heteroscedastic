@@ -17,7 +17,7 @@ from niftynet.io.image_reader import ImageReader
 from niftynet.layer.crop import CropLayer
 from niftynet.layer.histogram_normalisation import \
     HistogramNormalisationLayer
-from niftynet.layer.loss_regression import LossFunction
+from niftynet.layer.loss_multitask import LossFunction
 from niftynet.layer.mean_variance_normalisation import \
     MeanVarNormalisationLayer
 from niftynet.layer.pad import PadLayer
