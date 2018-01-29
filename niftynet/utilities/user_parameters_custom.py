@@ -80,6 +80,12 @@ def __add_multitask_args(parser):
         default='L2Loss')
 
     parser.add_argument(
+        "--multitask_loss",
+        metavar='TYPE_STR',
+        help="[Training only] type of loss function for multi-task application",
+        default='average')
+
+    parser.add_argument(
         "--output_prob",
         metavar='',
         help="[Inference only] whether to output multi-class probabilities",
