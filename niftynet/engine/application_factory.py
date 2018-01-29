@@ -27,7 +27,7 @@ SUPPORTED_APP = {
     'net_gan':
         'niftynet.application.gan_application.GANApplication',
     'net_multitask':
-        'niftynet.application.multitask_application.MultitaskApplication',
+        'niftynet.application.multitask_application.MultiTaskApplication',
 }
 
 SUPPORTED_NETWORK = {
