@@ -146,7 +146,7 @@ class ConvolutionalLayer(TrainableLayer):
         self.padding = padding
         self.with_bias = with_bias
 
-        # for BNLayer
+        # for BNLayerI
         self.moving_decay = moving_decay
         self.eps = eps
 

@@ -276,6 +276,8 @@ class MultiTaskApplication(BaseApplication):
                 data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
             elif multitask_loss == 'homoscedatic_1':
                 # loss function as defined by Kendall et al. (2017) Multi-task learning using uncertainty...
+                # note: in this function, parameter to be optimised is s = log(sigma^2)
+                #       in other loss function, parameter is just a weighting for a linear sum
                 w_1 = tf.get_variable('sigma_1', shape=(1, 1),
                                       initializer=self.multitask_param.loss_sigma_1, trainable=True)
                 w_2 = tf.get_variable('sigma_1', shape=(1, 1),
