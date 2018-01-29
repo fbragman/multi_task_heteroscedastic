@@ -258,6 +258,77 @@ class MultiTaskApplication(BaseApplication):
                                                 ground_truth=ground_truth_task_2,
                                                 weight_map=weight_map)
 
+            # Initialise homoscedatic variables here!
+            multitask_loss = self.multitask_param.multitask_loss
 
+            if multitask_loss == 'average':
+                # average weighting
+                w_1 = tf.get_variable('sigma_1', shape=(1, 1),initializer=tf.constant(0.5))
+                w_2 = tf.get_variable('sigma_2', shape=(1, 1),initializer=tf.constant(0.5))
+                data_loss = w_1*data_loss_task_1 + w_2*data_loss_task_2
+            elif multitask_loss == 'weighted':
+                # weighted sum
+                w_1 = tf.get_variable('sigma_1', shape=(1, 1),
+                                      initializer=tf.constant(self.multitask_param.loss_sigma_1))
+                w_2 = tf.get_variable('sigma_2', shape=(1, 1),
+                                      initializer=tf.constant(self.multitask_param.loss_sigma_2))
+                # calculate loss
+                data_loss = w_1*data_loss_task_1 + w_2*data_loss_task_2
 
+            elif multitask_loss == 'homoscedatic_1':
+                # loss function as defined by Kendall et al. (2017) Multi-task learning using uncertainty...
+                w_1 = tf.get_variable('sigma_1', shape=(1, 1),
+                                      initializer=self.multitask_param.loss_sigma_1, trainable=True)
+                w_2 = tf.get_variable('sigma_1', shape=(1, 1),
+                                      initializer=self.multitask_param.loss_sigma_2, trainable=True)
+                multitask_loss_function = LossFunction(loss_type=multitask_loss)
 
+                # calculate loss
+                data_loss = multitask_loss_function(data_loss_task_1, data_loss_task_2, w_1, w_2)
+
+            reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+
+            if self.net_param.decay > 0.0 and reg_losses:
+                reg_loss = tf.reduce_mean(
+                    [tf.reduce_mean(reg_loss) for reg_loss in reg_losses])
+                loss = data_loss + reg_loss
+            else:
+                loss = data_loss
+
+            grads = self.optimiser.compute_gradients(loss)
+            # collecting gradients variables
+            gradients_collector.add_to_collection([grads])
+            # collecting output variables
+            outputs_collector.add_to_collection(
+                var=data_loss, name='Loss',
+                average_over_devices=False, collection=CONSOLE)
+            outputs_collector.add_to_collection(
+                var=data_loss, name='Loss',
+                average_over_devices=True, summary_type='scalar',
+                collection=TF_SUMMARIES)
+
+        else:
+            data_dict = switch_sampler(for_training=False)
+            image = tf.cast(data_dict['image'], tf.float32)
+            net_out = self.net(image, is_training=self.is_training)
+
+            crop_layer = CropLayer(border=0, name='crop-88')
+            post_process_layer = PostProcessingLayer('IDENTITY')
+            net_out = post_process_layer(crop_layer(net_out))
+
+            outputs_collector.add_to_collection(
+                var=net_out, name='window',
+                average_over_devices=False, collection=NETWORK_OUTPUT)
+            outputs_collector.add_to_collection(
+                var=data_dict['image_location'], name='location',
+                average_over_devices=False, collection=NETWORK_OUTPUT)
+            init_aggregator = \
+                self.SUPPORTED_SAMPLING[self.net_param.window_sampling][2]
+            init_aggregator()
+
+    def interpret_output(self, batch_output):
+        if not self.is_training:
+            return self.output_decoder.decode_batch(
+                batch_output['window'], batch_output['location'])
+        else:
+            return True
