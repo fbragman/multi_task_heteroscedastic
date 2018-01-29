@@ -28,6 +28,7 @@ from niftynet.layer.rand_spatial_scaling import RandomSpatialScalingLayer
 
 SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight', 'sampler'])
 
+
 class MultiTaskApplication(BaseApplication):
     REQUIRED_CONFIG_SECTION = 'MULTITASK'
 
@@ -53,12 +54,11 @@ class MultiTaskApplication(BaseApplication):
                          self.initialise_grid_aggregator),
             'resize': (self.initialise_resize_sampler,
                        self.initialise_resize_sampler,
-                       self.initialise_resize_aggregator),
-
+                       self.initialise_resize_aggregator)
+        }
 
     # Input data
-    def initialise_dataset_loader(
-            self, data_param=None, task_param=None, data_partitioner=None):
+    def initialise_dataset_loader(self, data_param=None, task_param=None, data_partitioner=None):
 
         self.data_param = data_param
         self.multitask_param = task_param
@@ -263,9 +263,9 @@ class MultiTaskApplication(BaseApplication):
 
             if multitask_loss == 'average':
                 # average weighting
-                w_1 = tf.get_variable('sigma_1', shape=(1, 1),initializer=tf.constant(0.5))
-                w_2 = tf.get_variable('sigma_2', shape=(1, 1),initializer=tf.constant(0.5))
-                data_loss = w_1*data_loss_task_1 + w_2*data_loss_task_2
+                w_1 = tf.get_variable('sigma_1', shape=(1, 1), initializer=tf.constant(0.5))
+                w_2 = tf.get_variable('sigma_2', shape=(1, 1), initializer=tf.constant(0.5))
+                data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
             elif multitask_loss == 'weighted':
                 # weighted sum
                 w_1 = tf.get_variable('sigma_1', shape=(1, 1),
@@ -273,8 +273,7 @@ class MultiTaskApplication(BaseApplication):
                 w_2 = tf.get_variable('sigma_2', shape=(1, 1),
                                       initializer=tf.constant(self.multitask_param.loss_sigma_2))
                 # calculate loss
-                data_loss = w_1*data_loss_task_1 + w_2*data_loss_task_2
-
+                data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
             elif multitask_loss == 'homoscedatic_1':
                 # loss function as defined by Kendall et al. (2017) Multi-task learning using uncertainty...
                 w_1 = tf.get_variable('sigma_1', shape=(1, 1),
@@ -282,7 +281,6 @@ class MultiTaskApplication(BaseApplication):
                 w_2 = tf.get_variable('sigma_1', shape=(1, 1),
                                       initializer=self.multitask_param.loss_sigma_2, trainable=True)
                 multitask_loss_function = LossFunction(loss_type=multitask_loss)
-
                 # calculate loss
                 data_loss = multitask_loss_function(data_loss_task_1, data_loss_task_2, w_1, w_2)
 
