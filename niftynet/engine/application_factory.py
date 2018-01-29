@@ -26,7 +26,7 @@ SUPPORTED_APP = {
         'niftynet.application.autoencoder_application.AutoencoderApplication',
     'net_gan':
         'niftynet.application.gan_application.GANApplication',
-    'net_multitask_segsyn':
+    'net_multitask':
         'niftynet.application.multitask_application.MultitaskApplication',
 }
 
