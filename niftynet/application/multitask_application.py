@@ -251,6 +251,9 @@ class MultiTaskApplication(BaseApplication):
             ground_truth_task_1 = crop_layer(data_dict.get('output_1', None))
             ground_truth_task_2 = crop_layer(data_dict.get('output_2', None))
 
+            # Make sure ground truth is int32/int64
+            ground_truth_task_2 = tf.to_int64(ground_truth_task_2)
+
             weight_map = None if data_dict.get('weight', None) is None \
                 else crop_layer(data_dict.get('weight', None))
 
@@ -267,14 +270,14 @@ class MultiTaskApplication(BaseApplication):
 
             if multitask_loss == 'average':
                 # average weighting
-                w_1 = tf.get_variable('sigma_1', shape=(1, 1), initializer=tf.constant(0.5))
-                w_2 = tf.get_variable('sigma_2', shape=(1, 1), initializer=tf.constant(0.5))
+                w_1 = tf.get_variable('sigma_1', initializer=tf.constant(0.5))
+                w_2 = tf.get_variable('sigma_2', initializer=tf.constant(0.5))
                 data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
             elif multitask_loss == 'weighted':
                 # weighted sum
-                w_1 = tf.get_variable('sigma_1', shape=(1, 1),
+                w_1 = tf.get_variable('sigma_1',
                                       initializer=tf.constant(self.multitask_param.loss_sigma_1))
-                w_2 = tf.get_variable('sigma_2', shape=(1, 1),
+                w_2 = tf.get_variable('sigma_2',
                                       initializer=tf.constant(self.multitask_param.loss_sigma_2))
                 # calculate loss
                 data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
@@ -282,9 +285,9 @@ class MultiTaskApplication(BaseApplication):
                 # loss function as defined by Kendall et al. (2017) Multi-task learning using uncertainty...
                 # note: in this function, parameter to be optimised is s = log(sigma^2)
                 #       in other loss function, parameter is just a weighting for a linear sum
-                w_1 = tf.get_variable('sigma_1', shape=(1, 1),
+                w_1 = tf.get_variable('sigma_1',
                                       initializer=self.multitask_param.loss_sigma_1, trainable=True)
-                w_2 = tf.get_variable('sigma_1', shape=(1, 1),
+                w_2 = tf.get_variable('sigma_2',
                                       initializer=self.multitask_param.loss_sigma_2, trainable=True)
                 multitask_loss_function = LossFunction_MT(loss_type=multitask_loss)
                 # calculate loss

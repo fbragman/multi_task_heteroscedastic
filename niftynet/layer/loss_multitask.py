@@ -22,15 +22,16 @@ class LossFunction(Layer):
             self._loss_func_params = loss_func_params
         else:
             self._loss_func_params = {}
+
         self._data_loss_func = None
         self.make_callable_loss_func(loss_type)
 
     def make_callable_loss_func(self, type_str):
         self._data_loss_func = LossMultiTaskFactory.create(type_str)
 
-    def layer_op(self):
+    def layer_op(self, loss_1, loss_2, sigma_1, sigma_2):
         with tf.device('/cpu:0'):
-            return self._data_loss_func(**self._loss_func_params)
+            return self._data_loss_func(loss_1, loss_2, sigma_1, sigma_2)
 
 
 def homoscedatic_loss_approx(loss_task_1, loss_task_2, sigma_1, sigma_2):
