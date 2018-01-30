@@ -112,6 +112,10 @@ def __add_multitask_args(parser):
         type=float,
         default=1)
 
+    from niftynet.application.segmentation_application import SUPPORTED_INPUT
+    parser = add_input_name_args(parser, SUPPORTED_INPUT)
+    return parser
+
 
 def __add_segmentation_args(parser):
     parser.add_argument(
