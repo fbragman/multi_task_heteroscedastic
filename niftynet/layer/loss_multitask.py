@@ -57,6 +57,7 @@ def homoscedatic_loss_approx(loss_task_1, loss_task_2, sigma_1, sigma_2):
 
     task_1_weighted_loss = task_1_precision * loss_task_1 + sigma_1
     task_2_weighted_loss = task_2_precision * loss_task_2 + sigma_2
+
     total_loss = task_1_weighted_loss + task_2_weighted_loss
 
     return total_loss
