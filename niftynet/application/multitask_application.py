@@ -338,21 +338,53 @@ class MultiTaskApplication(BaseApplication):
                     collection=TF_SUMMARIES)
 
         else:
-            # Don't need to since niftynet will just output (hopefully) a A x B x C x task_number image
+            # Process regression and segmentation results individually
+            # Segmentation --> convert logits to probabilities or argmax labels
+
+            # Outputs hard-coded: net_out[0] - regression
+            #                     net_out[1] - segmentation
+
             data_dict = switch_sampler(for_training=False)
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
 
+            reg_out = net_out[0]
+            seg_out = net_out[1]
+
+            # Segmentation
+            output_prob = self.multitask_param.output_prob
+            num_classes_seg = self.multitask_param.num_classes[1]
+            if output_prob and num_classes_seg > 1:
+                post_process_layer = PostProcessingLayer(
+                    'SOFTMAX', num_classes=num_classes_seg)
+            elif not output_prob and num_classes_seg > 1:
+                post_process_layer = PostProcessingLayer(
+                    'ARGMAX', num_classes=num_classes_seg)
+            else:
+                post_process_layer = PostProcessingLayer(
+                    'IDENTITY', num_classes=num_classes_seg)
+            seg_out = post_process_layer(seg_out)
+
             crop_layer = CropLayer(border=0, name='crop-88')
             post_process_layer = PostProcessingLayer('IDENTITY')
-            net_out = post_process_layer(crop_layer(net_out))
+
+            seg_out = post_process_layer(crop_layer(seg_out))
+
+            # Regression
+            reg_out = post_process_layer(crop_layer(reg_out))
 
             outputs_collector.add_to_collection(
-                var=net_out, name='window',
+                var=seg_out, name='window',
                 average_over_devices=False, collection=NETWORK_OUTPUT)
+
+            outputs_collector.add_to_collection(
+                var=reg_out, name='window',
+                average_over_devices=False, collection=NETWORK_OUTPUT)
+
             outputs_collector.add_to_collection(
                 var=data_dict['image_location'], name='location',
                 average_over_devices=False, collection=NETWORK_OUTPUT)
+
             init_aggregator = \
                 self.SUPPORTED_SAMPLING[self.net_param.window_sampling][2]
             init_aggregator()
