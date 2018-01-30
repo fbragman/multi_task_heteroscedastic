@@ -314,15 +314,26 @@ class MultiTaskApplication(BaseApplication):
                 average_over_devices=True, summary_type='scalar',
                 collection=TF_SUMMARIES)
 
+            # output individual losses to Tensorboard
+            outputs_collector.add_to_collection(
+                var=data_loss_task_1, name='Loss_Task_1',
+                average_over_devices=True, summary_type='scalar',
+                collection=TF_SUMMARIES)
+
+            outputs_collector.add_to_collection(
+                var=data_loss_task_2, name='Loss_Task_2',
+                average_over_devices=True, summary_type='scalar',
+                collection=TF_SUMMARIES)
+
             if multitask_loss == 'homoscedatic_1':
 
                 outputs_collector.add_to_collection(
-                    var=w_1, name='sigma_1',
+                    var=tf.convert_to_tensor(w_1), name='sigma_1',
                     average_over_devices=True, summary_type='scalar',
                     collection=TF_SUMMARIES)
 
                 outputs_collector.add_to_collection(
-                    var=w_2, name='sigma_2',
+                    var=tf.convert_to_tensor(w_2), name='sigma_2',
                     average_over_devices=True, summary_type='scalar',
                     collection=TF_SUMMARIES)
 
