@@ -20,7 +20,7 @@ class LossFunction(Layer):
         super(LossFunction, self).__init__(name=name)
 
         # set loss function and function-specific additional params.
-        self._data_loss_func = LossRegressionFactory.create(loss_type)
+        self._data_loss_func = LossMultiTaskFactory.create(loss_type)
         self._loss_func_params = \
             loss_func_params if loss_func_params is not None else {}
 
