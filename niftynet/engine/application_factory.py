@@ -95,18 +95,6 @@ SUPPORTED_LOSS_SEGMENTATION = {
 }
 
 SUPPORTED_LOSS_MULTITASK = {
-    'CrossEntropy':
-        'niftynet.layer.loss_multitask.cross_entropy',
-    "L1Loss":
-        'niftynet.layer.loss_multitask.l1_loss',
-    "L2Loss":
-        'niftynet.layer.loss_multitask.l2_loss',
-    "RMSE":
-        'niftynet.layer.loss_multitask.rmse_loss',
-    "MAE":
-        'niftynet.layer.loss_multitask.mae_loss',
-    "Huber":
-        'niftynet.layer.loss_multitask.huber_loss',
     'homoscedatic_1':
         'niftynet.layer.loss_multitask.homoscedatic_loss_approx'
 }

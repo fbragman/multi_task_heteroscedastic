@@ -17,7 +17,9 @@ from niftynet.io.image_reader import ImageReader
 from niftynet.layer.crop import CropLayer
 from niftynet.layer.histogram_normalisation import \
     HistogramNormalisationLayer
-from niftynet.layer.loss_multitask import LossFunction
+from niftynet.layer.loss_multitask import LossFunction as LossFunction_MT
+from niftynet.layer.loss_segmentation import LossFunction as LossFunction_Seg
+from niftynet.layer.loss_regression import LossFunction as LossFunction_Reg
 from niftynet.layer.mean_variance_normalisation import \
     MeanVarNormalisationLayer
 from niftynet.layer.pad import PadLayer
@@ -233,9 +235,11 @@ class MultiTaskApplication(BaseApplication):
                     name=self.action_param.optimiser)
                 self.optimiser = optimiser_class.get_instance(
                     learning_rate=self.action_param.lr)
-            loss_func_task_1 = LossFunction(
+
+            loss_func_task_1 = LossFunction_Reg(
                 loss_type=self.multitask_param.loss_1)
-            loss_func_task_2 = LossFunction(
+            loss_func_task_2 = LossFunction_Seg(
+                n_class=self.multitask_param.num_classes[1],
                 loss_type=self.multitask_param.loss_2)
 
             crop_layer = CropLayer(
@@ -282,7 +286,7 @@ class MultiTaskApplication(BaseApplication):
                                       initializer=self.multitask_param.loss_sigma_1, trainable=True)
                 w_2 = tf.get_variable('sigma_1', shape=(1, 1),
                                       initializer=self.multitask_param.loss_sigma_2, trainable=True)
-                multitask_loss_function = LossFunction(loss_type=multitask_loss)
+                multitask_loss_function = LossFunction_MT(loss_type=multitask_loss)
                 # calculate loss
                 data_loss = multitask_loss_function(data_loss_task_1, data_loss_task_2, w_1, w_2)
 

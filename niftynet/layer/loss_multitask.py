@@ -13,7 +13,7 @@ from niftynet.layer.base_layer import Layer
 
 class LossFunction(Layer):
     def __init__(self,
-                 loss_type='L2Loss',
+                 loss_type='homoscedatic_1',
                  loss_func_params=None,
                  name='loss_function'):
 
