@@ -78,6 +78,3 @@ def homoscedatic_loss_approx(loss_task_1, loss_task_2, sigma_1, sigma_2):
 
 
 
-
-
-

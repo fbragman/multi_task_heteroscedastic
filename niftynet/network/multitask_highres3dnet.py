@@ -222,7 +222,7 @@ class MTHighRes3DNet(BaseNet):
             self._print(layer_instances)
             final_task_tensors = [item[1] for item in layer_instances]
             return final_task_tensors[-2:]
-        return layer_instances[layer_id][1]
+        return [item[1] for item in layer_instances[-2:]]
 
     def _print(self, list_of_layers):
         for (op, _) in list_of_layers:

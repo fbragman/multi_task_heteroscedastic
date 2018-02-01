@@ -28,7 +28,7 @@ from niftynet.layer.rand_flip import RandomFlipLayer
 from niftynet.layer.rand_rotation import RandomRotationLayer
 from niftynet.layer.rand_spatial_scaling import RandomSpatialScalingLayer
 
-SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight', 'sampler'])
+SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight'])
 
 
 class MultiTaskApplication(BaseApplication):
@@ -305,10 +305,12 @@ class MultiTaskApplication(BaseApplication):
             grads = self.optimiser.compute_gradients(loss)
             # collecting gradients variables
             gradients_collector.add_to_collection([grads])
+
             # collecting output variables
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
                 average_over_devices=False, collection=CONSOLE)
+
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
                 average_over_devices=True, summary_type='scalar',
@@ -347,7 +349,6 @@ class MultiTaskApplication(BaseApplication):
             data_dict = switch_sampler(for_training=False)
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
-
             reg_out = net_out[0]
             seg_out = net_out[1]
 
@@ -367,18 +368,13 @@ class MultiTaskApplication(BaseApplication):
 
             crop_layer = CropLayer(border=0, name='crop-88')
             post_process_layer = PostProcessingLayer('IDENTITY')
-
-            seg_out = post_process_layer(crop_layer(seg_out))
-
-            # Regression
             reg_out = post_process_layer(crop_layer(reg_out))
 
-            outputs_collector.add_to_collection(
-                var=seg_out, name='window',
-                average_over_devices=False, collection=NETWORK_OUTPUT)
+            # Concat
+            mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
 
             outputs_collector.add_to_collection(
-                var=reg_out, name='window',
+                var=mt_out, name='window',
                 average_over_devices=False, collection=NETWORK_OUTPUT)
 
             outputs_collector.add_to_collection(
