@@ -112,6 +112,19 @@ def __add_multitask_args(parser):
         type=float,
         default=1)
 
+    parser.add_argument(
+        "--output_interp_order_task1",
+        help='Output for task 1',
+        type=int,
+        default=3)
+
+    parser.add_argument(
+        "--output_interp_order_task2",
+        help='Output for task 2',
+        type=int,
+        default=0)
+
+
     from niftynet.application.multitask_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
