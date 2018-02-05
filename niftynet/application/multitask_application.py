@@ -270,17 +270,21 @@ class MultiTaskApplication(BaseApplication):
 
             if multitask_loss == 'average':
                 # average weighting
-                w_1 = tf.get_variable('sigma_1', initializer=tf.constant(0.5))
-                w_2 = tf.get_variable('sigma_2', initializer=tf.constant(0.5))
+                w_1 = tf.get_variable('sigma_1', initializer=tf.constant(0.5), trainable=False)
+                w_2 = tf.get_variable('sigma_2', initializer=tf.constant(0.5), trainable=False)
                 data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
+
             elif multitask_loss == 'weighted':
                 # weighted sum
                 w_1 = tf.get_variable('sigma_1',
-                                      initializer=tf.constant(self.multitask_param.loss_sigma_1))
+                                      initializer=tf.constant(self.multitask_param.loss_sigma_1),
+                                      trainable=False)
                 w_2 = tf.get_variable('sigma_2',
-                                      initializer=tf.constant(self.multitask_param.loss_sigma_2))
+                                      initializer=tf.constant(self.multitask_param.loss_sigma_2),
+                                      trainable=False)
                 # calculate loss
                 data_loss = w_1 * data_loss_task_1 + w_2 * data_loss_task_2
+
             elif multitask_loss == 'homoscedatic_1':
                 # loss function as defined by Kendall et al. (2017) Multi-task learning using uncertainty...
                 # note: in this function, parameter to be optimised is s = log(sigma^2)
@@ -309,6 +313,16 @@ class MultiTaskApplication(BaseApplication):
             # collecting output variables
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
+                average_over_devices=False, collection=CONSOLE)
+
+            # collecting output variables
+            outputs_collector.add_to_collection(
+                var=tf.convert_to_tensor(w_1), name='w_1',
+                average_over_devices=False, collection=CONSOLE)
+
+            # collecting output variables
+            outputs_collector.add_to_collection(
+                var=tf.convert_to_tensor(w_2), name='w_2',
                 average_over_devices=False, collection=CONSOLE)
 
             outputs_collector.add_to_collection(

@@ -124,7 +124,6 @@ def __add_multitask_args(parser):
         type=int,
         default=0)
 
-
     from niftynet.application.multitask_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
