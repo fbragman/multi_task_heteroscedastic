@@ -62,6 +62,12 @@ def __add_multitask_args(parser):
         default=0)
 
     parser.add_argument(
+        "--noise_model",
+        metavar='TYPE_STR',
+        help="Homoscedatic or heteroscedatic noise modelling",
+        default='homo')
+
+    parser.add_argument(
         "--num_classes",
         help="Set number of classes for each task",
         type=int_array,

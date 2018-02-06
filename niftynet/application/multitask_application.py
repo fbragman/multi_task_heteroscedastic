@@ -227,6 +227,9 @@ class MultiTaskApplication(BaseApplication):
 
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
+
+
+
             net_out_task_1 = net_out[0]
             net_out_task_2 = net_out[1]
 
