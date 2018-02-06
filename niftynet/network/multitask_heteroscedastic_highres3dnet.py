@@ -14,19 +14,20 @@ from niftynet.network.base_net import BaseNet
 
 
 class MTHeteroHighRes3DNet(BaseNet):
-
-    # initialise the shared representation/network
-    # shared network: convolutional network + 1 shared fc layer to generate features
-    # conv_0 - res_1 - res_2 - res_3 - conv_1
-
     # task-dependent networks: 1) regression --> num_classes_task_regression = 1
     #                             task_1
     #                          2) segmentation --> num_classes_task_segmentation = k
     #                             task_2
-
-    # outputs heteroscedastic noise output for tasks
-
-    # standard Bernouilli drop-out used with p = 0.5 in the fully connected layers
+    #
+    #
+    # Epistemic + heteroscedatic modelling
+    #
+    # 2 options: 1) 2 networks for each tasks
+    #               e.g.                        --- task 1 mean --->
+    #                                           --- task 1 var  --->
+    #                    representation network                      ---> combined loss
+    #                                           --- task 2 mean --->
+    #                                           --- task 2 var  --->
 
     def __init__(self,
                  num_classes,
@@ -52,12 +53,22 @@ class MTHeteroHighRes3DNet(BaseNet):
             {'name': 'res_2', 'n_features': 32, 'kernels': (3, 3), 'repeat': 3},
             {'name': 'res_3', 'n_features': 64, 'kernels': (3, 3), 'repeat': 3},
             {'name': 'conv_1', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_1_fc_1', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_1_fc_2', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_2_fc_1', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_2_fc_2', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_1_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
-            {'name': 'task_2_fc_out', 'n_features': num_classes[1], 'kernel_size': 1}]
+
+            {'name': 'task_1_mean_fc_1', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'task_1_mean_fc_2', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'task_1_noise_fc_1', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'task_1_noise_fc_2', 'n_features': 80, 'kernel_size': 1},
+
+            {'name': 'task_2_mean_fc_1', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'task_2_mean_fc_2', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'task_2_noise_fc_1', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'task_2_noise_fc_2', 'n_features': 80, 'kernel_size': 1},
+
+            {'name': 'task_1_mean_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
+            {'name': 'task_1_noise_fc_out', 'n_features': 1, 'kernel_size': 1},
+
+            {'name': 'task_1_mean_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
+            {'name': 'task_2_mean_fc_out', 'n_features': 1, 'kernel_size': 1}]
 
     def layer_op(self, images, is_training, layer_id=-1):
         assert layer_util.check_spatial_dims(
