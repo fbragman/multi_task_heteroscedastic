@@ -148,9 +148,7 @@ class MTHeteroHighRes3DNet(BaseNet):
         flow = fc_layer(flow, is_training)
         layer_instances.append((fc_layer, flow))
 
-        ###### task specific layers ######
-
-        ###### TASK 1 ######
+        ###### TASK 1 - prediction ######
 
         ### 1x1x1 convolution layer for task_1
         params = self.layers[5]
@@ -161,8 +159,8 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_1 = fc_layer(flow, is_training)
-        layer_instances.append((fc_layer, flow_task_1))
+        flow_task1_mean_1 = fc_layer(flow, is_training)
+        layer_instances.append((fc_layer, flow_task1_mean_1))
 
         ### 1x1x1 convolution layer for task_1
         params = self.layers[6]
@@ -173,12 +171,11 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_1 = fc_layer(flow_task_1, is_training)
-        layer_instances.append((fc_layer, flow_task_1))
+        flow_task1_mean_2 = fc_layer(flow_task1_mean_1, is_training)
+        layer_instances.append((fc_layer, flow_task1_mean_2))
 
-        ###### TASK 2 ######
+        ###### TASK 1 - prediction ######
 
-        ### 1x1x1 convolution layer for task_2
         params = self.layers[7]
         fc_layer = ConvolutionalLayer(
             n_output_chns=params['n_features'],
@@ -187,10 +184,10 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_2 = fc_layer(flow, is_training)
-        layer_instances.append((fc_layer, flow_task_2))
+        flow_task1_noise_1 = fc_layer(flow, is_training)
+        layer_instances.append((fc_layer, flow_task1_noise_1))
 
-        ### 1x1x1 convolution layer for task_2
+        ### 1x1x1 convolution layer for task_1
         params = self.layers[8]
         fc_layer = ConvolutionalLayer(
             n_output_chns=params['n_features'],
@@ -199,43 +196,122 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_2 = fc_layer(flow_task_2, is_training)
-        layer_instances.append((fc_layer, flow_task_2))
+        flow_task1_noise_2 = fc_layer(flow_task1_noise_1, is_training)
+        layer_instances.append((fc_layer, flow_task1_noise_2))
 
-        ###### OUTPUT TASK 1 ######
+        ###### TASK 2 - prediction ######
 
-        ### 1x1x1 convolution layer output for task_1
+        ### 1x1x1 convolution layer for task_2
         params = self.layers[9]
         fc_layer = ConvolutionalLayer(
             n_output_chns=params['n_features'],
             kernel_size=params['kernel_size'],
-            acti_func=None,
+            acti_func=self.acti_func,
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_1 = fc_layer(flow_task_1, is_training)
-        layer_instances.append((fc_layer, flow_task_1))
-
-        ###### OUTPUT TASK 2 ######
+        flow_task2_mean_1 = fc_layer(flow, is_training)
+        layer_instances.append((fc_layer, flow_task2_mean_1))
 
         ### 1x1x1 convolution layer for task_2
         params = self.layers[10]
         fc_layer = ConvolutionalLayer(
             n_output_chns=params['n_features'],
             kernel_size=params['kernel_size'],
+            acti_func=self.acti_func,
+            w_initializer=self.initializers['w'],
+            w_regularizer=self.regularizers['w'],
+            name=params['name'])
+        flow_task2_mean_2 = fc_layer(flow_task2_mean_1, is_training)
+        layer_instances.append((fc_layer, flow_task2_mean_2))
+
+        ###### TASK 2 - noise ######
+
+        params = self.layers[11]
+        fc_layer = ConvolutionalLayer(
+            n_output_chns=params['n_features'],
+            kernel_size=params['kernel_size'],
+            acti_func=self.acti_func,
+            w_initializer=self.initializers['w'],
+            w_regularizer=self.regularizers['w'],
+            name=params['name'])
+        flow_task2_noise_1 = fc_layer(flow, is_training)
+        layer_instances.append((fc_layer, flow_task2_noise_1))
+
+        ### 1x1x1 convolution layer for task_1
+        params = self.layers[12]
+        fc_layer = ConvolutionalLayer(
+            n_output_chns=params['n_features'],
+            kernel_size=params['kernel_size'],
+            acti_func=self.acti_func,
+            w_initializer=self.initializers['w'],
+            w_regularizer=self.regularizers['w'],
+            name=params['name'])
+        flow_task2_noise_2 = fc_layer(flow_task2_noise_1, is_training)
+        layer_instances.append((fc_layer, flow_task2_noise_2))
+
+        ###### OUTPUT TASK 1 - mean ######
+
+        ### 1x1x1 convolution layer output for task_1
+        params = self.layers[13]
+        fc_layer = ConvolutionalLayer(
+            n_output_chns=params['n_features'],
+            kernel_size=params['kernel_size'],
             acti_func=None,
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_2 = fc_layer(flow_task_2, is_training)
-        layer_instances.append((fc_layer, flow_task_2))
+        flow_task1_mean_output = fc_layer(flow_task1_mean_2, is_training)
+        layer_instances.append((fc_layer, flow_task1_mean_output))
+
+        ###### OUTPUT TASK 1 - noise ######
+
+        ### 1x1x1 convolution layer for task_1
+        params = self.layers[14]
+        fc_layer = ConvolutionalLayer(
+            n_output_chns=params['n_features'],
+            kernel_size=params['kernel_size'],
+            acti_func=None,
+            w_initializer=self.initializers['w'],
+            w_regularizer=self.regularizers['w'],
+            name=params['name'])
+        flow_task1_noise_output = fc_layer(flow_task1_noise_2, is_training)
+        layer_instances.append((fc_layer, flow_task1_noise_output))
+
+        ###### OUTPUT TASK 2 - mean ######
+
+        ### 1x1x1 convolution layer output for task_2
+        params = self.layers[15]
+        fc_layer = ConvolutionalLayer(
+            n_output_chns=params['n_features'],
+            kernel_size=params['kernel_size'],
+            acti_func=None,
+            w_initializer=self.initializers['w'],
+            w_regularizer=self.regularizers['w'],
+            name=params['name'])
+        flow_task2_mean_output = fc_layer(flow_task2_mean_2, is_training)
+        layer_instances.append((fc_layer, flow_task2_mean_output))
+
+        ###### OUTPUT TASK 2 - noise ######
+
+        ### 1x1x1 convolution layer for task_2
+        params = self.layers[16]
+        fc_layer = ConvolutionalLayer(
+            n_output_chns=params['n_features'],
+            kernel_size=params['kernel_size'],
+            acti_func=None,
+            w_initializer=self.initializers['w'],
+            w_regularizer=self.regularizers['w'],
+            name=params['name'])
+        flow_task2_noise_output = fc_layer(flow_task2_mean_2, is_training)
+        layer_instances.append((fc_layer, flow_task2_noise_output))
 
         # set training properties
         if is_training:
             self._print(layer_instances)
             final_task_tensors = [item[1] for item in layer_instances]
-            return final_task_tensors[-2:]
-        return [item[1] for item in layer_instances[-2:]]
+            return final_task_tensors[-4:]
+        return [item[1] for item in layer_instances[-4:]]
 
     def _print(self, list_of_layers):
         for (op, _) in list_of_layers:
