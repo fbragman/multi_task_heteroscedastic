@@ -228,8 +228,6 @@ class MultiTaskApplication(BaseApplication):
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
 
-
-
             net_out_task_1 = net_out[0]
             net_out_task_2 = net_out[1]
 
@@ -387,8 +385,17 @@ class MultiTaskApplication(BaseApplication):
             post_process_layer = PostProcessingLayer('IDENTITY')
             reg_out = post_process_layer(crop_layer(reg_out))
 
-            # Concat
-            mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
+            # Concatenation of tasks
+            if output_prob and num_classes_seg > 1:
+                # iterate over the classes and stack them all
+                class_imgs = []
+                for idx in range(num_classes_seg):
+                    class_imgs.append(tf.expand_dims(seg_out[:, :, :, idx], -1))
+
+                mt_out = tf.stack([reg_out, ])
+
+            else:
+                mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
 
             outputs_collector.add_to_collection(
                 var=mt_out, name='window',
