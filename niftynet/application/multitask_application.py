@@ -392,8 +392,11 @@ class MultiTaskApplication(BaseApplication):
                 for idx in range(num_classes_seg):
                     class_imgs.append(tf.expand_dims(seg_out[:, :, :, idx], -1))
 
-                mt_out = tf.stack([reg_out, ])
-
+                for idx in range(num_classes_seg):
+                    if idx == 0:
+                        mt_out = tf.concat([reg_out, class_imgs[idx]], 3)
+                    else:
+                        mt_out = tf.concat([mt_out, class_imgs[idx]], 3)
             else:
                 mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
 
