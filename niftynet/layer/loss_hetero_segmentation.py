@@ -7,7 +7,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 import tensorflow as tf
 
-from niftynet.engine.application_factory import LossSegmentationFactory
+from niftynet.engine.application_factory import LossHeteroSegmentationFactory
 from niftynet.layer.base_layer import Layer
 
 M_tree = np.array([[0., 1., 1., 1., 1.],
@@ -20,7 +20,7 @@ M_tree = np.array([[0., 1., 1., 1., 1.],
 class LossFunction(Layer):
     def __init__(self,
                  n_class,
-                 loss_type='Dice',
+                 loss_type='CrossEntropy',
                  softmax=True,
                  loss_func_params=None,
                  name='loss_function'):
@@ -32,7 +32,7 @@ class LossFunction(Layer):
 
         self._softmax = bool(softmax)
         # set loss function and function-specific additional params.
-        self._data_loss_func = LossSegmentationFactory.create(loss_type)
+        self._data_loss_func = LossHeteroSegmentationFactory.create(loss_type)
         self._loss_func_params = \
             loss_func_params if loss_func_params is not None else dict()
 
