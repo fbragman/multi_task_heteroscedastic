@@ -20,7 +20,7 @@ M_tree = np.array([[0., 1., 1., 1., 1.],
 class LossFunction(Layer):
     def __init__(self,
                  n_class,
-                 loss_type='CrossEntropy',
+                 loss_type='stoch_cross_entropy',
                  softmax=True,
                  loss_func_params=None,
                  name='loss_function'):
@@ -117,7 +117,7 @@ class LossFunction(Layer):
             return tf.reduce_mean(data_loss)
 
 
-def cross_entropy(prediction, ground_truth, weight_map=None):
+def stoch_cross_entropy(prediction, ground_truth, weight_map=None):
     """
     Function to calculate the cross-entropy loss function
 

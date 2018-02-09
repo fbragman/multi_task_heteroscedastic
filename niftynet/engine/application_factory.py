@@ -96,7 +96,7 @@ SUPPORTED_LOSS_SEGMENTATION = {
 
 SUPPORTED_LOSS_HETERO_SEGMENTATION = {
     "CrossEntropy":
-        'niftynet.layer.loss_hetero_segmentation.cross_entropy',
+        'niftynet.layer.loss_hetero_segmentation.stoch_cross_entropy',
 }
 
 SUPPORTED_LOSS_MULTITASK = {
