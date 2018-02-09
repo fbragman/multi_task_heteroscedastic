@@ -113,7 +113,7 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     :return: sum(differences squared) / 2 - Note, no square root
     """
 
-    # In Gal et al. NIPS 2017:
+    # From Gal et al. NIPS 2017:
     # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)s
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
