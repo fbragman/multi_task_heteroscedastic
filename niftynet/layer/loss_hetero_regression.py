@@ -35,6 +35,9 @@ class LossFunction(Layer):
         weighted by the heteroscedatic ``noise``.
         The computed loss map are weighted by ``weight_map``.
 
+        The ``noise`` is learned by considering s := log(sigma^2) for numerical
+        reasons
+
         if ``prediction`` is list of tensors, each element of the list
         will be compared against ``ground_truth` and the weighted by
         ``weight_map``.
@@ -110,8 +113,20 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     :return: sum(differences squared) / 2 - Note, no square root
     """
 
+    # In Gal et al. NIPS 2017:
+    # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)s
+    # where s := log(sigma^2) so sigma = sqrt(exp(s))
+
+    precision = 0.5*tf.exp(-noise)
     residuals = tf.subtract(prediction, ground_truth)
+    noise_regulariser = 0.5*noise
+
     if weight_map is not None:
         residuals = \
             tf.multiply(residuals, weight_map) / tf.reduce_sum(weight_map)
-    return tf.nn.l2_loss(residuals)
+
+    squared_residuals = tf.square(residuals)
+    loss = tf.add(tf.multiply(precision, squared_residuals), noise_regulariser)
+    loss = tf.reduce_sum(loss)
+
+    return tf.reduce_mean(loss)
