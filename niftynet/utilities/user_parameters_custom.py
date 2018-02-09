@@ -108,13 +108,13 @@ def __add_multitask_args(parser):
 
     parser.add_argument(
         "--loss_sigma_1",
-        help='Initial value for task 1 homoscedatic noise',
+        help='Initial value for task 1 homoscedatic noise or initial value for heteroscedatic map',
         type=float,
         default=1)
 
     parser.add_argument(
         "--loss_sigma_2",
-        help='Initial value for task 2 homoscedatic noise',
+        help='Initial value for task 2 homoscedatic noise or initial value for heteroscedatic map',
         type=float,
         default=1)
 

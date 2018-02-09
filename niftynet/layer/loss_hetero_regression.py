@@ -1,0 +1,117 @@
+# -*- coding: utf-8 -*-
+"""
+Loss functions for heteroscedatic regression
+1) L2Loss with noise --> p(y|x) ~ Normal(f(x),sigma(x))
+2) L1Loss with noise --> p(y|x) ~ Laplacian(f(x),sigma(x))
+"""
+from __future__ import absolute_import, print_function, division
+
+import tensorflow as tf
+
+from niftynet.engine.application_factory import LossRegressionFactory
+from niftynet.layer.base_layer import Layer
+
+
+class LossFunction(Layer):
+    def __init__(self,
+                 loss_type='L2Loss',
+                 loss_func_params=None,
+                 name='loss_function'):
+
+        super(LossFunction, self).__init__(name=name)
+
+        # set loss function and function-specific additional params.
+        self._data_loss_func = LossRegressionFactory.create(loss_type)
+        self._loss_func_params = \
+            loss_func_params if loss_func_params is not None else {}
+
+    def layer_op(self,
+                 prediction,
+                 noise,
+                 ground_truth=None,
+                 weight_map=None):
+        """
+        Compute learned loss attenuation from ``prediction`` and ``ground truth``,
+        weighted by the heteroscedatic ``noise``.
+        The computed loss map are weighted by ``weight_map``.
+
+        if ``prediction`` is list of tensors, each element of the list
+        will be compared against ``ground_truth` and the weighted by
+        ``weight_map``.
+
+        :param prediction: input will be reshaped into
+            ``(batch_size, N_voxels, num_classes)``
+        :param ground_truth: input will be reshaped into
+            ``(batch_size, N_voxels)``
+        :param noise: input will be reshaped into
+            ``(batch_size, N_voxels)``
+        :param weight_map: input will be reshaped into
+            ``(batch_size, N_voxels)``
+        :return:
+        """
+
+        with tf.device('/cpu:0'):
+            batch_size = ground_truth.shape[0].value
+            ground_truth = tf.reshape(ground_truth, [batch_size, -1])
+            noise = tf.reshape(noise, [batch_size, -1])
+            if weight_map is not None:
+                weight_map = tf.reshape(weight_map, [batch_size, -1])
+            if not isinstance(prediction, (list, tuple)):
+                prediction = [prediction]
+
+            data_loss = []
+            for ind, pred in enumerate(prediction):
+                # go through each scale
+
+                loss_batch = []
+                for b_ind, pred_b in enumerate(tf.unstack(pred, axis=0)):
+                    # go through each image in a batch
+
+                    pred_b = tf.reshape(pred_b, [-1])
+                    noise_b = noise[b_ind]
+                    ground_truth_b = ground_truth[b_ind]
+                    weight_b = None if weight_map is None else weight_map[b_ind]
+
+                    loss_params = {
+                        'prediction': pred_b,
+                        'ground_truth': ground_truth_b,
+                        'noise': noise_b,
+                        'weight_map': weight_b}
+                    if self._loss_func_params:
+                        loss_params.update(self._loss_func_params)
+
+                    loss_batch.append(self._data_loss_func(**loss_params))
+                data_loss.append(tf.reduce_mean(loss_batch))
+            return tf.reduce_mean(data_loss)
+
+
+def l1_loss(prediction, ground_truth, noise, weight_map=None):
+    """
+    :param prediction: the current prediction of the ground truth.
+    :param ground_truth: the measurement you are approximating with regression.
+    :return: mean of the l1 loss across all voxels.
+    """
+    absolute_residuals = tf.abs(tf.subtract(prediction, ground_truth))
+    if weight_map is not None:
+        absolute_residuals = tf.multiply(absolute_residuals, weight_map)
+        sum_residuals = tf.reduce_sum(absolute_residuals)
+        sum_weights = tf.reduce_sum(weight_map)
+    else:
+        sum_residuals = tf.reduce_sum(absolute_residuals)
+        sum_weights = tf.size(absolute_residuals)
+    return tf.truediv(tf.cast(sum_residuals, dtype=tf.float32),
+                      tf.cast(sum_weights, dtype=tf.float32))
+
+
+def l2_loss(prediction, ground_truth, noise, weight_map=None):
+    """
+    :param prediction: the current prediction of the ground truth.
+    :param ground_truth: the measurement you are approximating with regression.
+    :return: sum(differences squared) / 2 - Note, no square root
+    """
+
+    residuals = tf.subtract(prediction, ground_truth)
+    if weight_map is not None:
+        residuals = \
+            tf.multiply(residuals, weight_map) / tf.reduce_sum(weight_map)
+    return tf.nn.l2_loss(residuals)
