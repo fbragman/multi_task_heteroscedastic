@@ -94,6 +94,11 @@ SUPPORTED_LOSS_SEGMENTATION = {
         'niftynet.layer.loss_segmentation.huber_loss'
 }
 
+SUPPORTED_LOSS_HETERO_SEGMENTATION = {
+    "CrossEntropy":
+        'niftynet.layer.loss_hetero_segmentation.cross_entropy',
+}
+
 SUPPORTED_LOSS_MULTITASK = {
     'homoscedatic_1':
         'niftynet.layer.loss_multitask.homoscedatic_loss_approx'
@@ -110,6 +115,13 @@ SUPPORTED_LOSS_REGRESSION = {
         'niftynet.layer.loss_regression.mae_loss',
     "Huber":
         'niftynet.layer.loss_regression.huber_loss'
+}
+
+SUPPORTED_LOSS_HETERO_REGRESSION = {
+    "L1Loss":
+        'niftynet.layer.loss_hetero_regression.l1_loss',
+    "L2Loss":
+        'niftynet.layer.loss_hetero_regression.l2_loss',
 }
 
 SUPPORTED_LOSS_AUTOENCODER = {
@@ -234,6 +246,24 @@ class LossGANFactory(ModuleFactory):
     """
     SUPPORTED = SUPPORTED_LOSS_GAN
     type_str = 'GAN loss'
+
+
+class LossHeteroRegressionFactory(ModuleFactory):
+    """
+    Import a heteroscedatic regression loss function from ``niftynet.layer`` or
+    from user specified string
+    """
+    SUPPORTED = SUPPORTED_LOSS_SEGMENTATION
+    type_str = 'hetero regression loss'
+
+
+class LossHeteroSegmentationFactory(ModuleFactory):
+    """
+    Import a heteroscedatic regression loss function from ``niftynet.layer`` or
+    from user specified string
+    """
+    SUPPORTED = SUPPORTED_LOSS_SEGMENTATION
+    type_str = 'hetero segmetnation loss'
 
 
 class LossSegmentationFactory(ModuleFactory):
