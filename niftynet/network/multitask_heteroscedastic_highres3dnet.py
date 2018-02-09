@@ -47,6 +47,16 @@ class MTHeteroHighRes3DNet(BaseNet):
             acti_func=acti_func,
             name=name)
 
+        # representation layer: 0, 1, 2, 3, 4
+        # task 1 layer (pred): 5, 6
+        # task 1 layer (noise): 7, 8
+        # task 2 layer (pred): 9, 10
+        # task 2 layer (noise): 11, 12
+        # task 1 pred out: 13
+        # task 1 noise out: 14
+        # task 2 pred out: 15
+        # task 2 noise out: 16
+
         self.layers = [
             {'name': 'conv_0', 'n_features': 16, 'kernel_size': 3},
             {'name': 'res_1', 'n_features': 16, 'kernels': (3, 3), 'repeat': 3},
