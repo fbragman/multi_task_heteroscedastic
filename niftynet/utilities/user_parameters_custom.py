@@ -142,6 +142,12 @@ def __add_multitask_args(parser):
         type=int,
         default=0)
 
+    parser.add_argument(
+        "--seg_T_passes",
+        help="Stochastic T passes to calculate expected log-likelihood for segmentation",
+        type=int,
+        default=10)
+
     from niftynet.application.multitask_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
