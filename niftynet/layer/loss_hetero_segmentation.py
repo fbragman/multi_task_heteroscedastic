@@ -157,10 +157,10 @@ def stoch_cross_entropy(prediction, ground_truth, noise, T):
     #
     # noise generated on a voxel-wise basis with random samples from same distribution across logit classes
 
-    stochastic_loglik = tf.zeros(tf.shape(ground_truth))
+    stochastic_loglik = tf.zeros(tf.shape(prediction))
     for _ in range(T):
         # random noise generation of size (batch_size, n_voxel, num_classes)
-        random_noise = tf.random_normal(prediction.shape, mean=0, stddev=1.0, dtype=tf.float32)
+        random_noise = tf.random_normal(tf.shape(prediction), mean=0, stddev=1.0, dtype=tf.float32)
 
         # adding noise to the heteroscedatic noise map
         noise = tf.expand_dims(noise, 1)
