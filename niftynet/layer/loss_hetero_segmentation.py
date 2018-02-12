@@ -86,12 +86,6 @@ class LossFunction(Layer):
                         ground_truth_b = tf.squeeze(ground_truth_b, axis=-1)
                     if noise_b.shape.as_list()[-1] == 1:
                         noise_b = tf.squeeze(noise_b, axis=-1)
-                    if weight_map is not None:
-                        weight_b = tf.reshape(weight_map[b_ind], ref_shape)
-                        if weight_b.shape.as_list()[-1] == 1:
-                            weight_b = tf.squeeze(weight_b, axis=-1)
-                    else:
-                        weight_b = None
 
                     # preparing loss function parameters
                     loss_params = {
@@ -99,7 +93,7 @@ class LossFunction(Layer):
                         'ground_truth': ground_truth_b,
                         'noise': noise_b,
                         'T': T,
-                        'weight_map': weight_b}
+                        'num_classes': self._num_classes}
                     if self._loss_func_params:
                         loss_params.update(self._loss_func_params)
 
@@ -111,12 +105,20 @@ class LossFunction(Layer):
             return tf.reduce_mean(data_loss)
 
 
-def scaled_cross_entropy(prediction, ground_truth, noise, T):
+def scaled_cross_entropy(prediction, ground_truth, noise, T, num_classes):
     """
     Function to calculate the scaled cross-entropy loss function with likelihood function in form
-    p(y|x,f(x),sigma^2) = Softmax((1/sigma^2)*f(x))
+    p(y|x,f(x),sigma) = Softmax((1/sigma^2)*f(x))
 
     Likelihood function analytically defined
+    --> log p(y=c|f(x),sigma) = (1/sigma^2) * f(x)_c - log(sum_c'*exp((1/sigma^2)*f(x)_c'))
+
+    To avoid dividing by zero (same as in regression - see loss_hetero_regression)
+    set s := log(sigma^2), sigma = sqrt(exp(s))
+
+    Equation (9) from Kendall et al. 2017
+    (1/sigma^2) * f(x)_c - log(sum_c'*(1/sigma^2)*f(x)_c')
+    --> exp(-s) * f(x)_c - log(sum_c'*(exp(exp(-s)*f(x)_c'))
 
     :param prediction: the logits (before softmax)
     :param ground_truth: the segmentation ground truth
@@ -125,10 +127,14 @@ def scaled_cross_entropy(prediction, ground_truth, noise, T):
     :return: the cross-entropy loss
     """
 
+    class_mask = tf.one_hot(ground_truth, depth=num_classes)
+    sm = tf.nn.log_softmax(tf.divide(prediction, noise))
+    sm = tf.multiply(class_mask, sm)
+
+    return tf.reduce_sum(sm)
 
 
-
-def stoch_cross_entropy(prediction, ground_truth, noise, T):
+def stoch_cross_entropy(prediction, ground_truth, noise, T, num_classes):
     """
     Function to calculate the cross-entropy loss function with likelihood function in form
     p(y|x,f(x),sigma^2) = N(f(x),sigma^2)
@@ -157,6 +163,10 @@ def stoch_cross_entropy(prediction, ground_truth, noise, T):
     #
     # noise generated on a voxel-wise basis with random samples from same distribution across logit classes
 
+    # binary mask for ground_truth
+
+    class_mask = tf.one_hot(ground_truth, depth=num_classes)
+
     stochastic_loglik = tf.zeros(tf.shape(prediction))
     for _ in range(T):
         # random noise generation of size (batch_size, n_voxel, num_classes)
@@ -166,8 +176,13 @@ def stoch_cross_entropy(prediction, ground_truth, noise, T):
         noise = tf.expand_dims(noise, 1)
         stochastic_logit = tf.add(prediction, noise * random_noise)
 
+        # Calculate x - log(sum(exp(x))
+        log_sm = tf.nn.log_softmax(stochastic_logit)
+
         # iterative addition of forward passes
-        stochastic_loglik = tf.add(stochastic_loglik, tf.nn.log_softmax(stochastic_logit))
+        # add a mask since tf.nn.log_softmax = logits - log(reduce_sum(exp(logits), axis))
+        # output shape = size of logits
+        stochastic_loglik = tf.add(stochastic_loglik, tf.multiply(class_mask, log_sm))
 
     # calculate expectation
     expected_loglik = (1/T) * stochastic_loglik
