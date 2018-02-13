@@ -261,7 +261,7 @@ class LossHeteroRegressionFactory(ModuleFactory):
     Import a heteroscedatic regression loss function from ``niftynet.layer`` or
     from user specified string
     """
-    SUPPORTED = SUPPORTED_LOSS_SEGMENTATION
+    SUPPORTED = SUPPORTED_LOSS_HETERO_REGRESSION
     type_str = 'hetero regression loss'
 
 
@@ -270,7 +270,7 @@ class LossHeteroSegmentationFactory(ModuleFactory):
     Import a heteroscedatic regression loss function from ``niftynet.layer`` or
     from user specified string
     """
-    SUPPORTED = SUPPORTED_LOSS_SEGMENTATION
+    SUPPORTED = SUPPORTED_LOSS_HETERO_SEGMENTATION
     type_str = 'hetero segmetnation loss'
 
 
