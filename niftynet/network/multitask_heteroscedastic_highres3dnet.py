@@ -169,7 +169,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task1_mean_1 = fc_layer(flow, is_training)
+        flow_task1_mean_1 = fc_layer(flow, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task1_mean_1))
 
         ### 1x1x1 convolution layer for task_1
@@ -181,7 +181,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task1_mean_2 = fc_layer(flow_task1_mean_1, is_training)
+        flow_task1_mean_2 = fc_layer(flow_task1_mean_1, is_training,keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task1_mean_2))
 
         ###### TASK 1 - prediction ######
@@ -194,7 +194,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task1_noise_1 = fc_layer(flow, is_training)
+        flow_task1_noise_1 = fc_layer(flow, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task1_noise_1))
 
         ### 1x1x1 convolution layer for task_1
@@ -206,7 +206,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task1_noise_2 = fc_layer(flow_task1_noise_1, is_training)
+        flow_task1_noise_2 = fc_layer(flow_task1_noise_1, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task1_noise_2))
 
         ###### TASK 2 - prediction ######
@@ -220,7 +220,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task2_mean_1 = fc_layer(flow, is_training)
+        flow_task2_mean_1 = fc_layer(flow, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task2_mean_1))
 
         ### 1x1x1 convolution layer for task_2
@@ -232,7 +232,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task2_mean_2 = fc_layer(flow_task2_mean_1, is_training)
+        flow_task2_mean_2 = fc_layer(flow_task2_mean_1, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task2_mean_2))
 
         ###### TASK 2 - noise ######
@@ -245,7 +245,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task2_noise_1 = fc_layer(flow, is_training)
+        flow_task2_noise_1 = fc_layer(flow, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task2_noise_1))
 
         ### 1x1x1 convolution layer for task_1
@@ -257,7 +257,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task2_noise_2 = fc_layer(flow_task2_noise_1, is_training)
+        flow_task2_noise_2 = fc_layer(flow_task2_noise_1, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow_task2_noise_2))
 
         ###### OUTPUT TASK 1 - mean ######
