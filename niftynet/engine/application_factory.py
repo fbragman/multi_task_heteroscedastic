@@ -102,7 +102,7 @@ SUPPORTED_LOSS_HETERO_SEGMENTATION = {
     "ScaledSoftMax":
         'niftynet.layer.loss_hetero_segmentation.scaled_softmax',
     "ScaledApproxSoftMax":
-        'niftynet.layer.loss_hetero_segmentation.scaled_approx_soft_max'
+        'niftynet.layer.loss_hetero_segmentation.scaled_approx_softmax'
 }
 
 SUPPORTED_LOSS_MULTITASK = {

@@ -168,8 +168,6 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
     return tf.reduce_mean(scaled_loss)
 
 
-
-
 def stoch_softmax(prediction, ground_truth, noise, T, num_classes):
     """
     Function to calculate the cross-entropy loss function with likelihood function in form

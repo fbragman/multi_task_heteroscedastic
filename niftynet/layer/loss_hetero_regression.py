@@ -113,13 +113,16 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     :return: sum(differences squared) / 2 - Note, no square root
     """
 
+    # noise_regulariser is log(sigma^2) and not 1/2log(sigma^2)
+    # why? to be consistent with hetero seg due to Kendall approximation
+
     # From Gal et al. NIPS 2017:
     # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)s
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
     precision = 0.5*tf.exp(-noise)
     residuals = tf.subtract(prediction, ground_truth)
-    noise_regulariser = 0.5*noise
+    noise_regulariser = noise
 
     if weight_map is not None:
         residuals = \
