@@ -105,7 +105,7 @@ class LossFunction(Layer):
             return tf.reduce_mean(data_loss)
 
 
-def scaled_cross_entropy(prediction, ground_truth, noise, T, num_classes):
+def scaled_softmax(prediction, ground_truth, noise, T, num_classes):
     """
     Function to calculate the scaled cross-entropy loss function with likelihood function in form
     p(y|x,f(x),sigma) = Softmax((1/sigma^2)*f(x))
@@ -129,14 +129,48 @@ def scaled_cross_entropy(prediction, ground_truth, noise, T, num_classes):
 
     class_mask = tf.one_hot(ground_truth, depth=num_classes)
     s = tf.exp(-noise)
-    scaled_logit = tf.multiply(prediction, tf.expand_dims(s, 1))
+    scaled_logit = tf.multiply(tf.expand_dims(s, 1), prediction)
     sm = tf.nn.log_softmax(scaled_logit)
     sm = tf.multiply(class_mask, sm)
 
     return tf.reduce_sum(sm)
 
 
-def stoch_cross_entropy(prediction, ground_truth, noise, T, num_classes):
+def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
+    """
+    Approximation to log-likelihood of scaled softmax as in Kendall
+    Equation (10) from Kendall et a. 2017
+
+    L = -log(softmax(f(x)) * (0.5 / sigma^2) + log(sigma^2)
+
+    with s = log(sigma^2)
+
+    L = -log(softmax(f(x)) * (0.5exp(-s)) + exp(-s)
+
+    since -log(softmax) == cross-entropy
+
+    we use entropy = sparse_softmax_cross_entropy_with_logits
+
+    :param prediction: logits (before softmax)
+    :param ground_truth: segmentation ground truth
+    :param noise: modelled noise
+    :param T: (not used)
+    :param num_classes: number of classes
+    :return:
+    """
+
+    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=prediction, labels=ground_truth)
+
+    precision = 2*tf.exp(noise)
+    scaled_loss = (1/precision) * loss + noise
+
+    return tf.reduce_mean(scaled_loss)
+
+
+
+
+def stoch_softmax(prediction, ground_truth, noise, T, num_classes):
     """
     Function to calculate the cross-entropy loss function with likelihood function in form
     p(y|x,f(x),sigma^2) = N(f(x),sigma^2)
