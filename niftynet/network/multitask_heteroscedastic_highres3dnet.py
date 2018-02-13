@@ -35,7 +35,7 @@ class MTHeteroHighRes3DNet(BaseNet):
                  b_initializer=None,
                  b_regularizer=None,
                  acti_func='prelu',
-                 name='MTHighRes3DNet'):
+                 name='MTHeteroHighRes3DNet'):
 
         super(MTHeteroHighRes3DNet, self).__init__(
             num_classes=num_classes,
