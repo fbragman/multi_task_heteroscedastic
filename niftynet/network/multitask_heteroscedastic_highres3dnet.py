@@ -76,8 +76,8 @@ class MTHeteroHighRes3DNet(BaseNet):
             {'name': 'task_1_mean_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
             {'name': 'task_1_noise_fc_out', 'n_features': 1, 'kernel_size': 1},
 
-            {'name': 'task_1_mean_fc_out', 'n_features': num_classes[1], 'kernel_size': 1},
-            {'name': 'task_2_mean_fc_out', 'n_features': 1, 'kernel_size': 1}]
+            {'name': 'task_2_mean_fc_out', 'n_features': num_classes[1], 'kernel_size': 1},
+            {'name': 'task_2_noise_fc_out', 'n_features': 1, 'kernel_size': 1}]
 
     def layer_op(self, images, is_training, layer_id=-1):
         assert layer_util.check_spatial_dims(
