@@ -251,6 +251,10 @@ class MultiTaskApplication(BaseApplication):
             prediction_task_1 = crop_layer(net_out_task_1)
             prediction_task_2 = crop_layer(net_out_task_2)
 
+            if self.multitask_param.noise_model == 'hetero':
+                pred_noise_task_1 = crop_layer(noise_out_task_1)
+                pred_noise_task_2 = crop_layer(noise_out_task_2)
+
             ground_truth_task_1 = crop_layer(data_dict.get('output_1', None))
             ground_truth_task_2 = crop_layer(data_dict.get('output_2', None))
 
@@ -281,43 +285,14 @@ class MultiTaskApplication(BaseApplication):
                 loss_func_task_2 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[1],
                                                           loss_type=self.multitask_param.loss_2)
 
-                if self.multitask_param.hetero_task_init == 'zeros':
-
-                    noise_init_1 = tf.zeros_initializer()
-                    noise_init_2 = tf.zeros_initializer()
-
-                elif self.multitask_param.hetero_task_init == 'random':
-
-                    noise_init_1 = tf.truncated_normal_initializer(0, 1)
-                    noise_init_2 = tf.truncated_normal_initializer(0, 1)
-
-                elif self.multitask_param.hetero_task_init == 'value':
-
-                    noise_init_1 = tf.constant_initializer(self.multitask_param.hetero_task_1_init)
-                    noise_init_2 = tf.constant_initializer(self.multitask_param.hetero_task_2_init)
-
-
-                noise_task_1 = tf.get_variable('noise_1_img',
-                                                shape=tf.shape(prediction_task_1),
-                                                dtype=tf.float32,
-                                                initializer=noise_init_1,
-                                                trainable=True)
-
-                noise_task_2 = tf.get_variable('noise_2_img',
-                                               shape=tf.shape(prediction_task_1),
-                                               dtype=tf.float32,
-                                               initializer=noise_init_2,
-                                               trainable=True)
-
-
                 data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
                                                     ground_truth=ground_truth_task_1,
-                                                    noise=noise_task_1,
+                                                    noise=pred_noise_task_1,
                                                     weight_map=weight_map)
 
                 data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
                                                     ground_truth=ground_truth_task_2,
-                                                    noise=noise_task_2,
+                                                    noise=pred_noise_task_2,
                                                     weight_map=weight_map)
 
             # Set up the multi-task model

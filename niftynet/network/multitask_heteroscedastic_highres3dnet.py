@@ -22,13 +22,12 @@ class MTHeteroHighRes3DNet(BaseNet):
     #
     # Epistemic + heteroscedatic modelling
     #
-    # 2 options: 1) 2 networks for each tasks
+    #               2 networks for each tasks
     #               e.g.                        --- task 1 mean --->
     #                                           --- task 1 var  --->
     #                    representation network                      ---> combined loss
     #                                           --- task 2 mean --->
     #                                           --- task 2 var  --->
-
     def __init__(self,
                  num_classes,
                  w_initializer=None,
