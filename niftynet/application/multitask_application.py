@@ -230,8 +230,14 @@ class MultiTaskApplication(BaseApplication):
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
 
-            net_out_task_1 = net_out[0]
-            net_out_task_2 = net_out[1]
+            if self.multitask_param.noise_model == 'homo':
+                net_out_task_1 = net_out[0]
+                net_out_task_2 = net_out[1]
+            elif self.multitask_param.noise_model == 'hetero':
+                net_out_task_1 = net_out[0]
+                noise_out_task_1 = net_out[1]
+                net_out_task_2 = net_out[2]
+                noise_out_task_2 = net_out[3]
 
             with tf.name_scope('Optimiser'):
                 optimiser_class = OptimiserFactory.create(
@@ -254,6 +260,7 @@ class MultiTaskApplication(BaseApplication):
             weight_map = None if data_dict.get('weight', None) is None \
                 else crop_layer(data_dict.get('weight', None))
 
+            # Set up the noise model
             if self.multitask_param.noise_model == 'homo':
 
                 loss_func_task_1 = LossFunction_Reg(loss_type=self.multitask_param.loss_1)
@@ -313,7 +320,9 @@ class MultiTaskApplication(BaseApplication):
                                                     noise=noise_task_2,
                                                     weight_map=weight_map)
 
-            # Initialise multitask loss function + variables
+            # Set up the multi-task model
+            # Note: if using hetero - only summed_loss should be really used
+            #       homosecedatic_1 should only be used with noise_model = 'homo'
             multitask_loss = self.multitask_param.multitask_loss
             mt_loss_task = LossFunction_MT(multitask_loss)
 
