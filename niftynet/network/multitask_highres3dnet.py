@@ -13,7 +13,7 @@ from niftynet.layer.elementwise import ElementwiseLayer
 from niftynet.network.base_net import BaseNet
 
 
-class MTHighRes3DNet(BaseNet):
+class MTHeteroHighRes3DNet(BaseNet):
 
     # initialise the shared representation/network
     # shared network: convolutional network + 1 shared fc layer to generate features
@@ -35,7 +35,7 @@ class MTHighRes3DNet(BaseNet):
                  acti_func='prelu',
                  name='MTHighRes3DNet'):
 
-        super(MTHighRes3DNet, self).__init__(
+        super(MTHeteroHighRes3DNet, self).__init__(
             num_classes=num_classes,
             w_initializer=w_initializer,
             w_regularizer=w_regularizer,
