@@ -63,7 +63,7 @@ def homoscedatic_loss_approx(loss_task_1, loss_task_2, sigma_1, sigma_2):
     return total_loss
 
 
-def summed_loss(loss_task_1, loss_task_2):
+def summed_loss(loss_task_1, loss_task_2, sigma_1, sigma_2):
     """
     L_total = L_1 + L_2
 
@@ -73,6 +73,16 @@ def summed_loss(loss_task_1, loss_task_2):
     """
     return loss_task_1 + loss_task_2
 
+
+def weighted_loss(loss_task_1, loss_task_2, sigma_1, sigma_2):
+    """
+    L_total = sigma_1 * L_1 + sigma_2 * L_2
+
+    :param loss_task_1: the current loss for task 1 (scalar)
+    :param loss_task_2: the current loss for task 2 (scalar)
+    :return:
+    """
+    return sigma_1*loss_task_1 + sigma_2*loss_task_2
 
 
 

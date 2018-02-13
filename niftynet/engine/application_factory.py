@@ -105,7 +105,9 @@ SUPPORTED_LOSS_MULTITASK = {
     'homoscedatic_1':
         'niftynet.layer.loss_multitask.homoscedatic_loss_approx',
     'summed_loss':
-        'niftynet.layer.loss_multitask.summed_loss'
+        'niftynet.layer.loss_multitask.summed_loss',
+    'weighted_loss':
+        'niftynet.layer.loss_multitask.weighted_loss'
 }
 
 SUPPORTED_LOSS_REGRESSION = {
