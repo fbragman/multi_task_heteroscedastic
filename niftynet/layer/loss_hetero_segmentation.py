@@ -128,7 +128,8 @@ def scaled_cross_entropy(prediction, ground_truth, noise, T, num_classes):
     """
 
     class_mask = tf.one_hot(ground_truth, depth=num_classes)
-    sm = tf.nn.log_softmax(tf.divide(prediction, noise))
+    scaled_logit = tf.divide(prediction, tf.expand_dims(noise, 1))
+    sm = tf.nn.log_softmax(scaled_logit)
     sm = tf.multiply(class_mask, sm)
 
     return tf.reduce_sum(sm)

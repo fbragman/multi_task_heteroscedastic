@@ -292,8 +292,7 @@ class MultiTaskApplication(BaseApplication):
 
                 data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
                                                     ground_truth=ground_truth_task_2,
-                                                    noise=pred_noise_task_2,
-                                                    weight_map=weight_map)
+                                                    noise=pred_noise_task_2)
 
             # Set up the multi-task model
             # Note: if using hetero - only summed_loss should be really used
