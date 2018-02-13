@@ -336,15 +336,16 @@ class MultiTaskApplication(BaseApplication):
                 var=data_loss, name='Loss',
                 average_over_devices=False, collection=CONSOLE)
 
-            # collecting output variables
-            outputs_collector.add_to_collection(
-                var=tf.convert_to_tensor(w_1), name='w_1',
-                average_over_devices=False, collection=CONSOLE)
+            if multitask_loss == 'homoscedatic_1':
+                # collecting output variables
+                outputs_collector.add_to_collection(
+                    var=tf.convert_to_tensor(w_1), name='w_1',
+                    average_over_devices=False, collection=CONSOLE)
 
-            # collecting output variables
-            outputs_collector.add_to_collection(
-                var=tf.convert_to_tensor(w_2), name='w_2',
-                average_over_devices=False, collection=CONSOLE)
+                # collecting output variables
+                outputs_collector.add_to_collection(
+                    var=tf.convert_to_tensor(w_2), name='w_2',
+                    average_over_devices=False, collection=CONSOLE)
 
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
