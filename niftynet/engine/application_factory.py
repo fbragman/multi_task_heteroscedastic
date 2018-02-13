@@ -40,6 +40,8 @@ SUPPORTED_NETWORK = {
     # Multi-Task
     "multitask-highres3dnet":
         'niftynet.network.multitask_highres3dnet.MTHighRes3DNet',
+    "multitask-hetero-highres3dnet":
+        'niftynet.network.multitask_heteroscedastic_highres3dnet.MTHeteroHighRes3DNet',
 
     # Segmentation
     "highres3dnet":
