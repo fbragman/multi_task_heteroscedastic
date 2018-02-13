@@ -254,23 +254,64 @@ class MultiTaskApplication(BaseApplication):
             weight_map = None if data_dict.get('weight', None) is None \
                 else crop_layer(data_dict.get('weight', None))
 
-
             if self.multitask_param.noise_model == 'homo':
+
                 loss_func_task_1 = LossFunction_Reg(loss_type=self.multitask_param.loss_1)
                 loss_func_task_2 = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
                                                     loss_type=self.multitask_param.loss_2)
+
+                data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
+                                                    ground_truth=ground_truth_task_1,
+                                                    weight_map=weight_map)
+
+                data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
+                                                    ground_truth=ground_truth_task_2,
+                                                    weight_map=weight_map)
+
             elif self.multitask_param.noise_model == 'hetero':
+
                 loss_func_task_1 = LossFunction_HeteroReg(loss_type=self.multitask_param.loss_1)
                 loss_func_task_2 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[1],
                                                           loss_type=self.multitask_param.loss_2)
 
-            data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
-                                                ground_truth=ground_truth_task_1,
-                                                weight_map=weight_map)
+                if self.multitask_param.hetero_task_init == 'zeros':
 
-            data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
-                                                ground_truth=ground_truth_task_2,
-                                                weight_map=weight_map)
+                    noise_init_1 = tf.zeros_initializer()
+                    noise_init_2 = tf.zeros_initializer()
+
+                elif self.multitask_param.hetero_task_init == 'random':
+
+                    noise_init_1 = tf.truncated_normal_initializer(0, 1)
+                    noise_init_2 = tf.truncated_normal_initializer(0, 1)
+
+                elif self.multitask_param.hetero_task_init == 'value':
+
+                    noise_init_1 = tf.constant_initializer(self.multitask_param.hetero_task_1_init)
+                    noise_init_2 = tf.constant_initializer(self.multitask_param.hetero_task_2_init)
+
+
+                noise_task_1 = tf.get_variable('noise_1_img',
+                                                shape=tf.shape(prediction_task_1),
+                                                dtype=tf.float32,
+                                                initializer=noise_init_1,
+                                                trainable=True)
+
+                noise_task_2 = tf.get_variable('noise_2_img',
+                                               shape=tf.shape(prediction_task_1),
+                                               dtype=tf.float32,
+                                               initializer=noise_init_2,
+                                               trainable=True)
+
+
+                data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
+                                                    ground_truth=ground_truth_task_1,
+                                                    noise=noise_task_1,
+                                                    weight_map=weight_map)
+
+                data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
+                                                    ground_truth=ground_truth_task_2,
+                                                    noise=noise_task_2,
+                                                    weight_map=weight_map)
 
             # Initialise multitask loss function + variables
             multitask_loss = self.multitask_param.multitask_loss
