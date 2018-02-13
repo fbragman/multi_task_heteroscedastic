@@ -119,24 +119,6 @@ def __add_multitask_args(parser):
         default=1)
 
     parser.add_argument(
-        "--hetero_task_init",
-        help='Initialiser for task 2 heteroscedatic map',
-        type=str,
-        default='random')
-
-    parser.add_argument(
-        "--hetero_task_2_init",
-        help='Initialiser for task 2 heteroscedatic map',
-        type=float,
-        default='random')
-
-    parser.add_argument(
-        "--hetero_task_1_init",
-        help='Initialiser for task 2 heteroscedatic map',
-        type=float,
-        default='random')
-
-    parser.add_argument(
         "--output_interp_order_task1",
         help='Output for task 1',
         type=int,
