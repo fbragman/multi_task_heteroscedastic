@@ -103,7 +103,9 @@ SUPPORTED_LOSS_HETERO_SEGMENTATION = {
 
 SUPPORTED_LOSS_MULTITASK = {
     'homoscedatic_1':
-        'niftynet.layer.loss_multitask.homoscedatic_loss_approx'
+        'niftynet.layer.loss_multitask.homoscedatic_loss_approx',
+    'summed_loss':
+        'niftynet.layer.loss_multitask.summed_loss'
 }
 
 SUPPORTED_LOSS_REGRESSION = {
