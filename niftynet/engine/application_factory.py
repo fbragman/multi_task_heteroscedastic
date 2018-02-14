@@ -42,6 +42,8 @@ SUPPORTED_NETWORK = {
         'niftynet.network.multitask_highres3dnet.MTHighRes3DNet',
     "multitask-hetero-highres3dnet":
         'niftynet.network.multitask_heteroscedastic_highres3dnet.MTHeteroHighRes3DNet',
+    "multitask-hetero-highres3dnet-single":
+        'niftynet.network.multitask_heteroscedastic_highres3dnet_single.MTHeteroHighRes3DNet',
 
     # Segmentation
     "highres3dnet":
