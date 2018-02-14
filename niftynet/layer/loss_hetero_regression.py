@@ -122,13 +122,12 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
 
     precision = 0.5*tf.exp(-noise)
     residuals = tf.subtract(prediction, ground_truth)
-    noise_regulariser = noise
 
     if weight_map is not None:
         residuals = \
             tf.multiply(residuals, weight_map) / tf.reduce_sum(weight_map)
 
     squared_residuals = tf.square(residuals)
-    loss = tf.add(tf.multiply(precision, squared_residuals), noise_regulariser)
+    loss = tf.add(tf.multiply(precision, squared_residuals), noise)
 
     return tf.reduce_mean(loss)
