@@ -136,6 +136,12 @@ def __add_multitask_args(parser):
         type=int,
         default=10)
 
+    parser.add_argument(
+        "--dropout_representation",
+        help="Drop out probability on final layer of representation network",
+        type=float,
+        default=0)
+
     from niftynet.application.multitask_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
