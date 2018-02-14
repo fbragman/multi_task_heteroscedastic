@@ -163,7 +163,7 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
         logits=prediction, labels=ground_truth)
 
     precision = 2*tf.exp(noise)
-    scaled_loss = (1/precision) * loss + noise
+    scaled_loss = tf.add(tf.divide(loss, precision), noise)
 
     return tf.reduce_mean(scaled_loss)
 
