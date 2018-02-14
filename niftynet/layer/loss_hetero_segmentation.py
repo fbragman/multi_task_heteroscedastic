@@ -133,7 +133,7 @@ def scaled_softmax(prediction, ground_truth, noise, T, num_classes):
     sm = tf.nn.log_softmax(scaled_logit)
     sm = tf.multiply(class_mask, sm)
 
-    return tf.reduce_sum(sm)
+    return tf.reduce_mean(sm)
 
 
 def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):

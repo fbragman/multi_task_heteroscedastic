@@ -347,6 +347,30 @@ class MultiTaskApplication(BaseApplication):
                     var=tf.convert_to_tensor(w_2), name='w_2',
                     average_over_devices=False, collection=CONSOLE)
 
+            if self.multitask_param.noise_model == 'hetero':
+                # calculate the normal L2 and X-entropy to see...
+                loss_func_task_1_val = LossFunction_Reg(loss_type='L2Loss')
+                loss_func_task_2_val = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
+                                                        loss_type='CrossEntropy')
+                data_loss_task_1_val = loss_func_task_1_val(prediction=prediction_task_1,
+                                                            ground_truth=ground_truth_task_1,
+                                                            weight_map=weight_map)
+
+                data_loss_task_2_val = loss_func_task_2_val(prediction=prediction_task_2,
+                                                            ground_truth=ground_truth_task_2,
+                                                            weight_map=weight_map)
+
+                # output individual losses to Tensorboard
+                outputs_collector.add_to_collection(
+                    var=data_loss_task_1_val, name='Original_L2_loss',
+                    average_over_devices=True, summary_type='scalar',
+                    collection=TF_SUMMARIES)
+
+                outputs_collector.add_to_collection(
+                    var=data_loss_task_2_val, name='Original_cross_entropy',
+                    average_over_devices=True, summary_type='scalar',
+                    collection=TF_SUMMARIES)
+
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
                 average_over_devices=True, summary_type='scalar',
@@ -385,8 +409,15 @@ class MultiTaskApplication(BaseApplication):
             data_dict = switch_sampler(for_training=False)
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
-            reg_out = net_out[0]
-            seg_out = net_out[1]
+
+            if self.multitask_param.noise_model == 'hetero':
+                reg_out = net_out[0]
+                reg_noise_out = net_out[1]
+                seg_out = net_out[2]
+                seg_noise_out = net_out[3]
+            else:
+                reg_out = net_out[0]
+                seg_out = net_out[1]
 
             # Segmentation
             output_prob = self.multitask_param.output_prob
@@ -406,20 +437,40 @@ class MultiTaskApplication(BaseApplication):
             post_process_layer = PostProcessingLayer('IDENTITY')
             reg_out = post_process_layer(crop_layer(reg_out))
 
-            # Concatenation of tasks
+            #### OUTPUT hard-coded on 2D slices.... need to re-write for 3D ######
+
             if output_prob and num_classes_seg > 1:
+                # softmax seg output
+
                 # iterate over the classes and stack them all
                 class_imgs = []
                 for idx in range(num_classes_seg):
                     class_imgs.append(tf.expand_dims(seg_out[:, :, :, idx], -1))
 
-                for idx in range(num_classes_seg):
-                    if idx == 0:
-                        mt_out = tf.concat([reg_out, class_imgs[idx]], 3)
-                    else:
+                # Concatenation of tasks
+                if self.multitask_param.noise_model == 'hetero':
+                    # concat reg + reg_noise
+                    mt_out = tf.concat([reg_out, reg_noise_out], 3)
+                    # concat with seg probabilities
+                    for idx in range(num_classes_seg):
                         mt_out = tf.concat([mt_out, class_imgs[idx]], 3)
+                    # concat seg noise
+                    mt_out = tf.concat([mt_out, seg_noise_out], 3)
+                else:
+                    for idx in range(num_classes_seg):
+                        if idx == 0:
+                            mt_out = tf.concat([reg_out, class_imgs[idx]], 3)
+                        else:
+                            mt_out = tf.concat([mt_out, class_imgs[idx]], 3)
             else:
-                mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
+                # argmax output
+                if self.multitask_param.noise_model == 'hetero':
+                    # double check - probably doesn't work
+                    mt_out = tf.stack([reg_out, reg_noise_out], axis=4)
+                    mt_out = tf.stack([mt_out, tf.cast(seg_out, tf.float32)], axis=4)
+                    mt_out = tf.stack([mt_out, seg_noise_out], axis=4)
+                else:
+                    mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
 
             outputs_collector.add_to_collection(
                 var=mt_out, name='window',
