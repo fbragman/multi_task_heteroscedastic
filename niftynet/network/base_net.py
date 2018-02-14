@@ -11,6 +11,7 @@ class BaseNet(TrainableLayer):
 
     def __init__(self,
                  num_classes=0,
+                 dropout_rep=0,
                  w_initializer=None,
                  w_regularizer=None,
                  b_initializer=None,
@@ -22,6 +23,8 @@ class BaseNet(TrainableLayer):
 
         self.num_classes = num_classes
         self.acti_func = acti_func
+
+        self.dropout_rep = dropout_rep
 
         self.initializers = {'w': w_initializer, 'b': b_initializer}
         self.regularizers = {'w': w_regularizer, 'b': b_regularizer}
