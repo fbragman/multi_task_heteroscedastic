@@ -238,6 +238,8 @@ def cross_entropy(prediction, ground_truth, weight_map=None):
     :param weight_map:
     :return: the cross-entropy loss
     """
+
+    ground_truth = tf.to_int64(ground_truth)
     entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=prediction, labels=ground_truth)
     if weight_map is not None:
