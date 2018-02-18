@@ -13,7 +13,7 @@ from niftynet.layer.elementwise import ElementwiseLayer
 from niftynet.network.base_net import BaseNet
 
 
-class MTHeteroHighRes3DNet(BaseNet):
+class MTHighRes3DNet(BaseNet):
 
     # initialise the shared representation/network
     # shared network: convolutional network + 1 shared fc layer to generate features
@@ -28,6 +28,7 @@ class MTHeteroHighRes3DNet(BaseNet):
 
     def __init__(self,
                  num_classes,
+                 dropout_rep,
                  w_initializer=None,
                  w_regularizer=None,
                  b_initializer=None,
@@ -35,8 +36,9 @@ class MTHeteroHighRes3DNet(BaseNet):
                  acti_func='prelu',
                  name='MTHighRes3DNet'):
 
-        super(MTHeteroHighRes3DNet, self).__init__(
+        super(MTHighRes3DNet, self).__init__(
             num_classes=num_classes,
+            dropout_rep=dropout_rep,
             w_initializer=w_initializer,
             w_regularizer=w_regularizer,
             b_initializer=b_initializer,
@@ -148,7 +150,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_1 = fc_layer(flow, is_training, keep_prob=0.5)
+        flow_task_1 = fc_layer(flow, is_training, keep_prob=self.dropout_rep)
         layer_instances.append((fc_layer, flow_task_1))
 
         ### 1x1x1 convolution layer for task_1
@@ -160,7 +162,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_1 = fc_layer(flow_task_1, is_training, keep_prob=0.5)
+        flow_task_1 = fc_layer(flow_task_1, is_training, keep_prob=self.dropout_rep)
         layer_instances.append((fc_layer, flow_task_1))
 
         ###### TASK 2 ######
@@ -174,7 +176,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_2 = fc_layer(flow, is_training, keep_prob=0.5)
+        flow_task_2 = fc_layer(flow, is_training, keep_prob=self.dropout_rep)
         layer_instances.append((fc_layer, flow_task_2))
 
         ### 1x1x1 convolution layer for task_2
@@ -186,7 +188,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task_2 = fc_layer(flow_task_2, is_training, keep_prob=0.5)
+        flow_task_2 = fc_layer(flow_task_2, is_training, keep_prob=self.dropout_rep)
         layer_instances.append((fc_layer, flow_task_2))
 
         ###### OUTPUT TASK 1 ######
