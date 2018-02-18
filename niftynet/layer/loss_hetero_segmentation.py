@@ -168,6 +168,38 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
     return tf.reduce_mean(scaled_loss)
 
 
+def scaled_approx_softmax_img(prediction, ground_truth, noise, T, num_classes):
+    """
+    Approximation to log-likelihood of scaled softmax as in Kendall
+    Equation (10) from Kendall et a. 2017
+
+    L = -log(softmax(f(x)) * (0.5 / sigma^2) + log(sigma^2)
+
+    with s = log(sigma^2)
+
+    L = -log(softmax(f(x)) * (0.5exp(-s)) + exp(-s)
+
+    since -log(softmax) == cross-entropy
+
+    we use entropy = sparse_softmax_cross_entropy_with_logits
+
+    :param prediction: logits (before softmax)
+    :param ground_truth: segmentation ground truth
+    :param noise: modelled noise
+    :param T: (not used)
+    :param num_classes: number of classes
+    :return: loss image
+    """
+
+    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=prediction, labels=ground_truth)
+
+    precision = 2*tf.exp(noise)
+    scaled_loss = tf.add(tf.divide(loss, precision), noise)
+
+    return scaled_loss
+
+
 def stoch_softmax(prediction, ground_truth, noise, T, num_classes):
     """
     Function to calculate the cross-entropy loss function with likelihood function in form

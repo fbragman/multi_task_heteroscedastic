@@ -104,7 +104,9 @@ SUPPORTED_LOSS_HETERO_SEGMENTATION = {
     "ScaledSoftMax":
         'niftynet.layer.loss_hetero_segmentation.scaled_softmax',
     "ScaledApproxSoftMax":
-        'niftynet.layer.loss_hetero_segmentation.scaled_approx_softmax'
+        'niftynet.layer.loss_hetero_segmentation.scaled_approx_softmax',
+    "ScaledApproxSoftMaxImage":
+        'niftynet.layer.loss_hetero_segmentation.scaled_approx_softmax_img'
 }
 
 SUPPORTED_LOSS_MULTITASK = {
@@ -134,6 +136,8 @@ SUPPORTED_LOSS_HETERO_REGRESSION = {
         'niftynet.layer.loss_hetero_regression.l1_loss',
     "L2Loss":
         'niftynet.layer.loss_hetero_regression.l2_loss',
+    "L2LossImage":
+        'niftynet.layer.loss_hetero_regression.l2_loss_img'
 }
 
 SUPPORTED_LOSS_AUTOENCODER = {

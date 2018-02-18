@@ -110,7 +110,7 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     """
     :param prediction: the current prediction of the ground truth.
     :param ground_truth: the measurement you are approximating with regression.
-    :return: sum(differences squared) / 2 - Note, no square root
+    :return: 1/numVox * sum_numVox (1/2)exp(-s) * L2loss + s
     """
 
     # noise_regulariser is log(sigma^2) and not 1/2log(sigma^2)
@@ -131,3 +131,36 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     loss = tf.add(tf.multiply(precision, squared_residuals), noise)
 
     return tf.reduce_mean(loss)
+
+
+def l2_loss_img(prediction, ground_truth, noise, weight_map=None):
+    """
+    :param prediction: the current prediction of the ground truth.
+    :param ground_truth: the measurement you are approximating with regression.
+    :return: loss image to weight voxel wise in hetero multi-task loss
+    """
+
+    precision = 0.5*tf.exp(-noise)
+    residuals = tf.subtract(prediction, ground_truth)
+
+    if weight_map is not None:
+        residuals = \
+            tf.multiply(residuals, weight_map) / tf.reduce_sum(weight_map)
+
+    squared_residuals = tf.square(residuals)
+    loss = tf.add(tf.multiply(precision, squared_residuals), noise)
+
+    return loss
+
+
+def l2_outlier_loss(prediction, ground_truth, noise, weight_map=None):
+    """
+
+    Likelihood = N(mu, sigma) + U(range)
+
+    Help deal with outliers
+
+    :param prediction: the current prediction of the ground truth.
+    :param ground_truth: the measurement you are approximating with regression.
+    :return: 1/numVox * sum_numVox (1/2)exp(-s) * L2loss + s + Uniform
+    """
