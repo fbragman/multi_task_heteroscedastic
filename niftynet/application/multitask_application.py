@@ -329,8 +329,8 @@ class MultiTaskApplication(BaseApplication):
             # Set up the multi-task model
             # Note: if using hetero - only summed_loss should be really used
             #       homosecedatic_1 should only be used with noise_model = 'homo'
+            multitask_loss = self.multitask_param.multitask_loss
             if self.multitask_param.noise_model != 'single-hetero':
-                multitask_loss = self.multitask_param.multitask_loss
                 mt_loss_task = LossFunction_MT(multitask_loss)
 
             if self.multitask_param.noise_model == 'single-hetero':
@@ -416,8 +416,20 @@ class MultiTaskApplication(BaseApplication):
 
             if self.multitask_param.noise_model == 'single-hetero':
                 # output individual losses to Tensorboard
+                if self.multitask_param.loss_1 == 'L2Loss':
+                    Tloss_func_task_1 = LossFunction_Reg(loss_type='MAE')
+                    Tdata_loss_task_1 = Tloss_func_task_1(prediction=prediction_task_1,
+                                                        ground_truth=ground_truth_task_1,
+                                                        noise=pred_noise_task_1,
+                                                        weight_map=weight_map)
+                elif self.multitask_param.loss_1 == 'ScaledApproxSoftMax':
+                    Tloss_func_task_1 = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
+                                                              loss_type='CrossEntropy')
+                    Tdata_loss_task_1 = Tloss_func_task_1(prediction=prediction_task_1,
+                                                        ground_truth=ground_truth_task_1,
+                                                        noise=pred_noise_task_1)
                 outputs_collector.add_to_collection(
-                    var=data_loss_task_1, name='Loss_Task_1',
+                    var=Tdata_loss_task_1, name='Original',
                     average_over_devices=True, summary_type='scalar',
                     collection=TF_SUMMARIES)
 
