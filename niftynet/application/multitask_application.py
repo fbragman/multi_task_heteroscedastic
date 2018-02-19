@@ -350,7 +350,7 @@ class MultiTaskApplication(BaseApplication):
 
             if self.multitask_param.noise_model == 'hetero':
                 # calculate the normal L2 and X-entropy to see...
-                loss_func_task_1_val = LossFunction_Reg(loss_type='L2Loss')
+                loss_func_task_1_val = LossFunction_Reg(loss_type='MAE')
                 loss_func_task_2_val = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
                                                         loss_type='CrossEntropy')
                 data_loss_task_1_val = loss_func_task_1_val(prediction=prediction_task_1,
@@ -363,7 +363,7 @@ class MultiTaskApplication(BaseApplication):
 
                 # output individual losses to Tensorboard
                 outputs_collector.add_to_collection(
-                    var=data_loss_task_1_val, name='Original_L2_loss',
+                    var=data_loss_task_1_val, name='Original_MAE',
                     average_over_devices=True, summary_type='scalar',
                     collection=TF_SUMMARIES)
 
@@ -413,9 +413,9 @@ class MultiTaskApplication(BaseApplication):
 
             if self.multitask_param.noise_model == 'hetero':
                 reg_out = net_out[0]
-                reg_noise_out = net_out[1]
+                reg_noise_out = tf.sqrt(tf.exp(net_out[1]))
                 seg_out = net_out[2]
-                seg_noise_out = net_out[3]
+                seg_noise_out = tf.sqrt(tf.exp(net_out[3]))
             else:
                 reg_out = net_out[0]
                 seg_out = net_out[1]
@@ -438,31 +438,29 @@ class MultiTaskApplication(BaseApplication):
             post_process_layer = PostProcessingLayer('IDENTITY')
             reg_out = post_process_layer(crop_layer(reg_out))
 
-            #### OUTPUT hard-coded on 2D slices.... need to re-write for 3D ######
-
             if output_prob and num_classes_seg > 1:
                 # softmax seg output
 
                 # iterate over the classes and stack them all
                 class_imgs = []
                 for idx in range(num_classes_seg):
-                    class_imgs.append(tf.expand_dims(seg_out[:, :, :, idx], -1))
+                    class_imgs.append(tf.expand_dims(seg_out[..., idx], -1))
 
                 # Concatenation of tasks
                 if self.multitask_param.noise_model == 'hetero':
                     # concat reg + reg_noise
-                    mt_out = tf.concat([reg_out, reg_noise_out], 3)
+                    mt_out = tf.concat([reg_out, reg_noise_out], -1)
                     # concat with seg probabilities
                     for idx in range(num_classes_seg):
-                        mt_out = tf.concat([mt_out, class_imgs[idx]], 3)
+                        mt_out = tf.concat([mt_out, class_imgs[idx]], -1)
                     # concat seg noise
-                    mt_out = tf.concat([mt_out, seg_noise_out], 3)
+                    mt_out = tf.concat([mt_out, seg_noise_out], -1)
                 else:
                     for idx in range(num_classes_seg):
                         if idx == 0:
-                            mt_out = tf.concat([reg_out, class_imgs[idx]], 3)
+                            mt_out = tf.concat([reg_out, class_imgs[idx]], -1)
                         else:
-                            mt_out = tf.concat([mt_out, class_imgs[idx]], 3)
+                            mt_out = tf.concat([mt_out, class_imgs[idx]], -1)
             else:
                 # argmax output
                 if self.multitask_param.noise_model == 'hetero':
