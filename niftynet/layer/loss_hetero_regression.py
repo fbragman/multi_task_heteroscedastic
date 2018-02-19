@@ -94,15 +94,23 @@ def l1_loss(prediction, ground_truth, noise, weight_map=None):
     :param ground_truth: the measurement you are approximating with regression.
     :return: mean of the l1 loss across all voxels.
     """
+
+    precision = 0.5*tf.exp(-noise)
+
     absolute_residuals = tf.abs(tf.subtract(prediction, ground_truth))
-    if weight_map is not None:
-        absolute_residuals = tf.multiply(absolute_residuals, weight_map)
-        sum_residuals = tf.reduce_sum(absolute_residuals)
-        sum_weights = tf.reduce_sum(weight_map)
-    else:
-        sum_residuals = tf.reduce_sum(absolute_residuals)
-        sum_weights = tf.size(absolute_residuals)
-    return tf.truediv(tf.cast(sum_residuals, dtype=tf.float32),
+
+    #if weight_map is not None:
+    #    absolute_residuals = tf.multiply(absolute_residuals, weight_map)
+    #    sum_residuals = tf.reduce_sum(absolute_residuals)
+    #    sum_weights = tf.reduce_sum(weight_map)
+
+    sum_residuals = tf.reduce_sum(absolute_residuals)
+    sum_weights = tf.size(absolute_residuals)
+
+    loss = tf.multiply(absolute_residuals, precision)
+    loss = tf.add(loss, noise)
+
+    return tf.truediv(tf.cast(loss, dtype=tf.float32),
                       tf.cast(sum_weights, dtype=tf.float32))
 
 
@@ -117,7 +125,7 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     # why? to be consistent with hetero seg due to Kendall approximation
 
     # From Gal et al. NIPS 2017:
-    # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)s
+    # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
     precision = 0.5*tf.exp(-noise)
