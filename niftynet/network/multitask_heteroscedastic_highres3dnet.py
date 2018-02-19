@@ -314,7 +314,7 @@ class MTHeteroHighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow_task2_noise_output = fc_layer(flow_task2_mean_2, is_training)
+        flow_task2_noise_output = fc_layer(flow_task2_noise_2, is_training)
         layer_instances.append((fc_layer, flow_task2_noise_output))
 
         # set training properties
