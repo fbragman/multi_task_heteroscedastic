@@ -30,6 +30,8 @@ from niftynet.layer.rand_flip import RandomFlipLayer
 from niftynet.layer.rand_rotation import RandomRotationLayer
 from niftynet.layer.rand_spatial_scaling import RandomSpatialScalingLayer
 
+import numpy as np
+
 SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight'])
 
 
@@ -320,8 +322,9 @@ class MultiTaskApplication(BaseApplication):
                                                         noise=pred_noise_task_1,
                                                         weight_map=weight_map)
                 elif self.multitask_param.loss_1 == 'ScaledApproxSoftMax':
-                    loss_func_task_1 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[1],
+                    loss_func_task_1 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[0],
                                                               loss_type=self.multitask_param.loss_1)
+                    ground_truth_task_1 = tf.to_int64(ground_truth_task_1)
                     data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
                                                         ground_truth=ground_truth_task_1,
                                                         noise=pred_noise_task_1)
@@ -420,14 +423,13 @@ class MultiTaskApplication(BaseApplication):
                     Tloss_func_task_1 = LossFunction_Reg(loss_type='MAE')
                     Tdata_loss_task_1 = Tloss_func_task_1(prediction=prediction_task_1,
                                                         ground_truth=ground_truth_task_1,
-                                                        noise=pred_noise_task_1,
                                                         weight_map=weight_map)
                 elif self.multitask_param.loss_1 == 'ScaledApproxSoftMax':
-                    Tloss_func_task_1 = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
+                    Tloss_func_task_1 = LossFunction_Seg(n_class=self.multitask_param.num_classes[0],
                                                               loss_type='CrossEntropy')
                     Tdata_loss_task_1 = Tloss_func_task_1(prediction=prediction_task_1,
-                                                        ground_truth=ground_truth_task_1,
-                                                        noise=pred_noise_task_1)
+                                                        ground_truth=ground_truth_task_1)
+
                 outputs_collector.add_to_collection(
                     var=Tdata_loss_task_1, name='Original',
                     average_over_devices=True, summary_type='scalar',
@@ -474,13 +476,21 @@ class MultiTaskApplication(BaseApplication):
                 reg_noise_out = tf.sqrt(tf.exp(net_out[1]))
                 seg_out = net_out[2]
                 seg_noise_out = tf.sqrt(tf.exp(net_out[3]))
-            else:
+            elif self.multitask_param.noise_model == 'homo':
                 reg_out = net_out[0]
                 seg_out = net_out[1]
+            elif self.multitask_param.noise_model == 'single-hetero':
+                if self.multitask_param.loss_1 == 'L2Loss':
+                    reg_out = net_out[0]
+                else:
+                    seg_out = net_out[0]
+                noise_out = net_out[1]
 
             # Segmentation
             output_prob = self.multitask_param.output_prob
             num_classes_seg = self.multitask_param.num_classes[1]
+            if self.multitask_param.noise_model == 'single-hetero':
+                num_classes_seg = self.multitask_param.num_classes[0]
             if output_prob and num_classes_seg > 1:
                 post_process_layer = PostProcessingLayer(
                     'SOFTMAX', num_classes=num_classes_seg)
@@ -490,11 +500,15 @@ class MultiTaskApplication(BaseApplication):
             else:
                 post_process_layer = PostProcessingLayer(
                     'IDENTITY', num_classes=num_classes_seg)
-            seg_out = post_process_layer(seg_out)
+
+            if self.multitask_param.loss_1 == 'ScaledApproxSoftMax':
+                seg_out = post_process_layer(seg_out)
 
             crop_layer = CropLayer(border=0, name='crop-88')
             post_process_layer = PostProcessingLayer('IDENTITY')
-            reg_out = post_process_layer(crop_layer(reg_out))
+
+            if 'reg_out' in locals():
+                reg_out = post_process_layer(crop_layer(reg_out))
 
             if output_prob and num_classes_seg > 1:
                 # softmax seg output
@@ -513,21 +527,30 @@ class MultiTaskApplication(BaseApplication):
                         mt_out = tf.concat([mt_out, class_imgs[idx]], -1)
                     # concat seg noise
                     mt_out = tf.concat([mt_out, seg_noise_out], -1)
-                else:
+                elif self.multitask_param.noise_model == 'homo':
                     for idx in range(num_classes_seg):
                         if idx == 0:
                             mt_out = tf.concat([reg_out, class_imgs[idx]], -1)
                         else:
                             mt_out = tf.concat([mt_out, class_imgs[idx]], -1)
+                elif self.multitask_param.noise_model == 'single-hetero':
+                    first = class_imgs
+                    sec = tf.sqrt(tf.exp(noise_out))
+                    if type(first) is list:
+                        mt_out = first[0]
+                        for idx in np.linspace(1, num_classes_seg-1, num_classes_seg-1):
+                            mt_out = tf.concat([mt_out, first[int(idx)]], -1)
+                        mt_out = tf.concat([mt_out, sec], -1)
             else:
                 # argmax output
                 if self.multitask_param.noise_model == 'hetero':
-                    # double check - probably doesn't work
-                    mt_out = tf.stack([reg_out, reg_noise_out], axis=4)
-                    mt_out = tf.stack([mt_out, tf.cast(seg_out, tf.float32)], axis=4)
-                    mt_out = tf.stack([mt_out, seg_noise_out], axis=4)
-                else:
-                    mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=4)
+                    mt_out = tf.stack([reg_out, reg_noise_out], axis=-1)
+                    mt_out = tf.stack([mt_out, tf.cast(seg_out, tf.float32)], axis=-1)
+                    mt_out = tf.stack([mt_out, seg_noise_out], axis=-1)
+                elif self.multitask_param.noise_model == 'homo':
+                    mt_out = tf.stack([reg_out, tf.cast(seg_out, tf.float32)], axis=-1)
+                elif self.multitask_param.noise_model == 'single-hetero':
+                    mt_out = tf.stack([reg_out, tf.sqrt(tf.exp(noise_out))], axis=-1)
 
             outputs_collector.add_to_collection(
                 var=mt_out, name='window',
