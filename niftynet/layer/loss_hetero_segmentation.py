@@ -14,7 +14,7 @@ from niftynet.layer.base_layer import Layer
 class LossFunction(Layer):
     def __init__(self,
                  n_class,
-                 loss_type='stoch_cross_entropy',
+                 loss_type='scaled_approx_softmax',
                  loss_func_params=None,
                  name='loss_function'):
 
@@ -162,8 +162,9 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=prediction, labels=ground_truth)
 
-    precision = 2*tf.exp(noise)
-    scaled_loss = tf.add(tf.divide(loss, precision), noise)
+    small_constant = 1e-06
+    precision = 0.5*(tf.exp(-noise) + small_constant)
+    scaled_loss = tf.add(tf.multiply(precision, loss), noise)
 
     return tf.reduce_mean(scaled_loss)
 
@@ -194,8 +195,11 @@ def scaled_approx_softmax_img(prediction, ground_truth, noise, T, num_classes):
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=prediction, labels=ground_truth)
 
-    precision = 2*tf.exp(noise)
-    scaled_loss = tf.add(tf.divide(loss, precision), noise)
+
+    small_constant = 1e-05
+
+    precision = 2*tf.exp(noise + small_constant)
+    scaled_loss = tf.add(tf.div(loss, precision), noise)
 
     return scaled_loss
 

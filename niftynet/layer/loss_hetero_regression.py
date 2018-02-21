@@ -110,8 +110,8 @@ def l1_loss(prediction, ground_truth, noise, weight_map=None):
     loss = tf.multiply(absolute_residuals, precision)
     loss = tf.add(loss, noise)
 
-    return tf.truediv(tf.cast(loss, dtype=tf.float32),
-                      tf.cast(sum_weights, dtype=tf.float32))
+    return tf.reduce_mean(tf.truediv(tf.cast(loss, dtype=tf.float32),
+                          tf.cast(sum_weights, dtype=tf.float32)))
 
 
 def l2_loss(prediction, ground_truth, noise, weight_map=None):
@@ -128,7 +128,8 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
-    precision = 0.5*tf.exp(-noise)
+    small_constant = 1e-06
+    precision = 0.5*(tf.exp(-noise) + small_constant)
     residuals = tf.subtract(prediction, ground_truth)
 
     if weight_map is not None:
