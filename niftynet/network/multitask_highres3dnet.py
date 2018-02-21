@@ -51,11 +51,11 @@ class MTHighRes3DNet(BaseNet):
             {'name': 'res_1', 'n_features': 16, 'kernels': (3, 3), 'repeat': 3},
             {'name': 'res_2', 'n_features': 32, 'kernels': (3, 3), 'repeat': 3},
             {'name': 'res_3', 'n_features': 64, 'kernels': (3, 3), 'repeat': 3},
-            {'name': 'conv_1', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_1_fc_1', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_1_fc_2', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_2_fc_1', 'n_features': 80, 'kernel_size': 1},
-            {'name': 'task_2_fc_2', 'n_features': 80, 'kernel_size': 1},
+            {'name': 'conv_1', 'n_features': 200, 'kernel_size': 1},
+            {'name': 'task_1_fc_1', 'n_features': 200, 'kernel_size': 1},
+            {'name': 'task_1_fc_2', 'n_features': 200, 'kernel_size': 1},
+            {'name': 'task_2_fc_1', 'n_features': 200, 'kernel_size': 1},
+            {'name': 'task_2_fc_2', 'n_features': 200, 'kernel_size': 1},
             {'name': 'task_1_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
             {'name': 'task_2_fc_out', 'n_features': num_classes[1], 'kernel_size': 1}]
 
