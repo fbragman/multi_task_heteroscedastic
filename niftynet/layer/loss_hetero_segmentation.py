@@ -39,6 +39,7 @@ class LossFunction(Layer):
                  prediction,
                  noise,
                  ground_truth,
+                 weight_map=None,
                  T=None):
         """
         Compute loss from `prediction` and `ground truth`,
@@ -136,7 +137,7 @@ def scaled_softmax(prediction, ground_truth, noise, T, num_classes):
     return tf.reduce_mean(sm)
 
 
-def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
+def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes, weight_map=None):
     """
     Approximation to log-likelihood of scaled softmax as in Kendall
     Equation (10) from Kendall et a. 2017
@@ -167,6 +168,11 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes):
 
     precision = 0.5*(tf.exp(-noise))
     scaled_loss = tf.add(tf.multiply(precision, loss), noise)
+
+    if weight_map is not None:
+        weight_map = tf.cast(tf.size(scaled_loss), dtype=tf.float32) / \
+                     tf.reduce_sum(weight_map) * weight_map
+        entropy = tf.multiply(scaled_loss, weight_map)
 
     return tf.reduce_mean(scaled_loss)
 

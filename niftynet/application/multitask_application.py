@@ -34,7 +34,7 @@ from niftynet.layer.discrete_label_normalisation import \
 
 import numpy as np
 
-SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight'])
+SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight', 'sampler'])
 
 
 class MultiTaskApplication(BaseApplication):
@@ -323,7 +323,8 @@ class MultiTaskApplication(BaseApplication):
 
                 data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
                                                     ground_truth=ground_truth_task_2,
-                                                    noise=pred_noise_task_2)
+                                                    noise=pred_noise_task_2,
+                                                    weight_map=weight_map)
 
             elif self.multitask_param.noise_model == 'single-hetero':
 
