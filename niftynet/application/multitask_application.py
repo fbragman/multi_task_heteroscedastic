@@ -29,6 +29,8 @@ from niftynet.layer.post_processing import PostProcessingLayer
 from niftynet.layer.rand_flip import RandomFlipLayer
 from niftynet.layer.rand_rotation import RandomRotationLayer
 from niftynet.layer.rand_spatial_scaling import RandomSpatialScalingLayer
+from niftynet.layer.discrete_label_normalisation import \
+    DiscreteLabelNormalisationLayer
 
 import numpy as np
 
@@ -101,11 +103,21 @@ class MultiTaskApplication(BaseApplication):
                 cutoff=self.net_param.cutoff,
                 name='hist_norm_layer')
 
+        label_normaliser = None
+        if self.net_param.histogram_ref_file:
+            label_normaliser = DiscreteLabelNormalisationLayer(
+                image_name='label',
+                modalities=vars(task_param).get('label'),
+                model_filename=self.net_param.histogram_ref_file)
+
         normalisation_layers = []
         if self.net_param.normalisation:
             normalisation_layers.append(histogram_normaliser)
         if self.net_param.whitening:
             normalisation_layers.append(mean_var_normaliser)
+        if task_param.label_normalisation and \
+                (self.is_training or not task_param.output_prob):
+            normalisation_layers.append(label_normaliser)
 
         augmentation_layers = []
         if self.is_training:
