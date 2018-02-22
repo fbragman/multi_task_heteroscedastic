@@ -128,7 +128,7 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
-    small_constant = 5e-02
+    small_constant = 5e-03
     noise = tf.log(tf.exp(noise) + small_constant)
     precision = 0.5*(tf.exp(-noise))
 

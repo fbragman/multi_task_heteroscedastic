@@ -514,12 +514,8 @@ class MultiTaskApplication(BaseApplication):
                 post_process_layer = PostProcessingLayer(
                     'IDENTITY', num_classes=num_classes_seg)
 
-            if self.multitask_param.loss_1 == 'ScaledApproxSoftMax':
-                seg_out = post_process_layer(seg_out)
-
-            if self.multitask_param.loss_2 == 'ScaledApproxSoftMax':
-                # because of shit coding to deal with single-hetero
-                # in single-hetero, task 1 could be segmentation
+            if self.multitask_param.loss_1 == 'ScaledApproxSoftMax' \
+                    or self.multitask_param.loss_2 == 'ScaledApproxSoftMax':
                 seg_out = post_process_layer(seg_out)
 
             crop_layer = CropLayer(border=0, name='crop-88')
