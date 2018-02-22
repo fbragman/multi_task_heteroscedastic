@@ -47,15 +47,15 @@ class MTHighRes3DNet(BaseNet):
             name=name)
 
         self.layers = [
-            {'name': 'conv_0', 'n_features': 16, 'kernel_size': 3},
-            {'name': 'res_1', 'n_features': 16, 'kernels': (3, 3), 'repeat': 3},
-            {'name': 'res_2', 'n_features': 32, 'kernels': (3, 3), 'repeat': 3},
-            {'name': 'res_3', 'n_features': 64, 'kernels': (3, 3), 'repeat': 3},
-            {'name': 'conv_1', 'n_features': 200, 'kernel_size': 1},
-            {'name': 'task_1_fc_1', 'n_features': 200, 'kernel_size': 1},
-            {'name': 'task_1_fc_2', 'n_features': 200, 'kernel_size': 1},
-            {'name': 'task_2_fc_1', 'n_features': 200, 'kernel_size': 1},
-            {'name': 'task_2_fc_2', 'n_features': 200, 'kernel_size': 1},
+            {'name': 'conv_0', 'n_features': 64, 'kernel_size': 3},
+            {'name': 'res_1', 'n_features': 64, 'kernels': (3, 3), 'repeat': 3},
+            {'name': 'res_2', 'n_features': 128, 'kernels': (3, 3), 'repeat': 3},
+            {'name': 'res_3', 'n_features': 256, 'kernels': (3, 3), 'repeat': 3},
+            {'name': 'conv_1', 'n_features': 2048, 'kernel_size': 3},
+            {'name': 'task_1_fc_1', 'n_features': 256, 'kernel_size': 3},
+            {'name': 'task_1_fc_2', 'n_features': 256, 'kernel_size': 3},
+            {'name': 'task_2_fc_1', 'n_features': 256, 'kernel_size': 3},
+            {'name': 'task_2_fc_2', 'n_features': 256, 'kernel_size': 3},
             {'name': 'task_1_fc_out', 'n_features': num_classes[0], 'kernel_size': 1},
             {'name': 'task_2_fc_out', 'n_features': num_classes[1], 'kernel_size': 1}]
 

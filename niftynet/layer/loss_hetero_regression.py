@@ -128,18 +128,19 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
-    small_constant = 1e-06
+    small_constant = 5e-02
     noise = tf.log(tf.exp(noise) + small_constant)
     precision = 0.5*(tf.exp(-noise))
 
     residuals = tf.subtract(prediction, ground_truth)
 
-    if weight_map is not None:
-        residuals = \
-            tf.multiply(residuals, weight_map) / tf.reduce_sum(weight_map)
-
     squared_residuals = tf.square(residuals)
     loss = tf.add(tf.multiply(precision, squared_residuals), noise)
+
+    if weight_map is not None:
+        loss = \
+            tf.multiply(loss, weight_map) / tf.reduce_sum(weight_map)
+        print('HAHAHHA')
 
     return tf.reduce_mean(loss)
 
