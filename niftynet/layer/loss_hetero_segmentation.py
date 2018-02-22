@@ -163,7 +163,7 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes, weigh
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=prediction, labels=ground_truth)
 
-    small_constant = 5e-03
+    small_constant = 5e-02
     if small_constant > 0.:
         noise = tf.log(tf.exp(noise) + small_constant)
 
