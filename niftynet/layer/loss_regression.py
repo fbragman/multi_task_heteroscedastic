@@ -102,10 +102,8 @@ def l2_loss(prediction, ground_truth, weight_map=None):
     """
 
     residuals = tf.subtract(prediction, ground_truth)
-    if weight_map is not None:
-        residuals = \
-            tf.multiply(residuals, weight_map) / tf.reduce_sum(weight_map)
-    return tf.nn.l2_loss(residuals)
+    squared_residuals = tf.square(residuals)
+    return tf.reduce_mean(squared_residuals)
 
 
 def rmse_loss(prediction, ground_truth, weight_map=None):
