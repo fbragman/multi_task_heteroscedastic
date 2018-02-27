@@ -124,24 +124,20 @@ def l2_loss(prediction, ground_truth, noise, weight_map=None):
     # noise_regulariser is log(sigma^2) and not 1/2log(sigma^2)
     # why? to be consistent with hetero seg due to Kendall approximation
 
+    # noise is net_out
+    # assume noise = log(sigma)
+
     # From Gal et al. NIPS 2017:
     # Equation (8) is: (1/2)*exp(-s)||y - pred||^2 + (1/2)
     # where s := log(sigma^2) so sigma = sqrt(exp(s))
 
-    small_constant = 5e-03
-    noise = tf.log(tf.exp(noise) + small_constant)
-    precision = 0.5*(tf.exp(-noise))
+    small_constant = 1e-6
+    sigma_opt = tf.square(tf.exp(noise) + small_constant)
 
     residuals = tf.subtract(prediction, ground_truth)
-
     squared_residuals = tf.square(residuals)
-    loss = tf.add(tf.multiply(precision, squared_residuals), noise)
 
-    if weight_map is not None:
-        loss = \
-            tf.multiply(loss, weight_map) / tf.reduce_sum(weight_map)
-        print('HAHAHHA')
-
+    loss = (1/sigma_opt) * squared_residuals + tf.log(sigma_opt)
     return tf.reduce_mean(loss)
 
 
