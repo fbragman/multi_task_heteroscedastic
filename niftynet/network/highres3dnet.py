@@ -119,7 +119,7 @@ class HighRes3DNet(BaseNet):
             w_initializer=self.initializers['w'],
             w_regularizer=self.regularizers['w'],
             name=params['name'])
-        flow = fc_layer(flow, is_training)
+        flow = fc_layer(flow, is_training, keep_prob=0.5)
         layer_instances.append((fc_layer, flow))
 
         ### 1x1x1 convolution layer
