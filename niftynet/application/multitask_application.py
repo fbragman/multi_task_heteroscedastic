@@ -486,18 +486,19 @@ class MultiTaskApplication(BaseApplication):
 
             if self.multitask_param.noise_model == 'hetero':
                 reg_out = net_out[0]
-                reg_noise_out = tf.sqrt(tf.exp(net_out[1]))
+                reg_noise_out = tf.square(tf.exp(net_out[1] + 1e-6))
                 seg_out = net_out[2]
-                seg_noise_out = tf.sqrt(tf.exp(net_out[3]))
+                seg_noise_out = tf.square(tf.exp(net_out[3] + 1e-6))
             elif self.multitask_param.noise_model == 'homo':
                 reg_out = net_out[0]
                 seg_out = net_out[1]
             elif self.multitask_param.noise_model == 'single-hetero':
                 if self.multitask_param.loss_1 == 'L2Loss':
                     reg_out = net_out[0]
+                    noise_out = tf.square(tf.exp(net_out[1] + 1e-6))
                 else:
                     seg_out = net_out[0]
-                noise_out = net_out[1]
+                    noise_out = tf.square(tf.exp(net_out[1] + 1e-6))
 
             # Segmentation
             output_prob = self.multitask_param.output_prob
@@ -515,7 +516,8 @@ class MultiTaskApplication(BaseApplication):
                     'IDENTITY', num_classes=num_classes_seg)
 
             if self.multitask_param.loss_1 == 'ScaledApproxSoftMax' \
-                    or self.multitask_param.loss_2 == 'ScaledApproxSoftMax':
+                    or self.multitask_param.loss_2 == 'ScaledApproxSoftMax' \
+                    or self.multitask_param.loss_2 == 'CrossEntropy':
                 seg_out = post_process_layer(seg_out)
 
             crop_layer = CropLayer(border=0, name='crop-88')
@@ -549,7 +551,7 @@ class MultiTaskApplication(BaseApplication):
                             mt_out = tf.concat([mt_out, class_imgs[idx]], -1)
                 elif self.multitask_param.noise_model == 'single-hetero':
                     first = class_imgs
-                    sec = tf.sqrt(tf.exp(noise_out))
+                    sec = noise_out
                     if type(first) is list:
                         mt_out = first[0]
                         for idx in np.linspace(1, num_classes_seg-1, num_classes_seg-1):
