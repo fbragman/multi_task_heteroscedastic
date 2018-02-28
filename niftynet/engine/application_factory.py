@@ -48,6 +48,9 @@ SUPPORTED_NETWORK = {
     # Segmentation
     "highres3dnet":
         'niftynet.network.highres3dnet.HighRes3DNet',
+    "highres3dnet_nodrop":
+        'niftynet.network.highres3dnet_nodrop.HighRes3DNet_NoDrop',
+
     "highres3dnet_small":
         'niftynet.network.highres3dnet_small.HighRes3DNetSmall',
     "highres3dnet_large":
