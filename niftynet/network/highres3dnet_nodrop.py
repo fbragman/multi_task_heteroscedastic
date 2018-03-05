@@ -27,7 +27,7 @@ class HighRes3DNet_NoDrop(BaseNet):
                  b_initializer=None,
                  b_regularizer=None,
                  acti_func='prelu',
-                 name='HighRes3DNet'):
+                 name='HighRes3DNet_NoDrop'):
 
         super(HighRes3DNet_NoDrop, self).__init__(
             num_classes=num_classes,

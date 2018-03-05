@@ -495,10 +495,10 @@ class MultiTaskApplication(BaseApplication):
             elif self.multitask_param.noise_model == 'single-hetero':
                 if self.multitask_param.loss_1 == 'L2Loss':
                     reg_out = net_out[0]
-                    noise_out = tf.sqrt(tf.exp(net_out[1])+0.005)
+                    noise_out = (tf.exp(net_out[1])+0.005)
                 else:
                     seg_out = net_out[0]
-                    noise_out = tf.sqrt(tf.exp(net_out[1])+0.05)
+                    noise_out = (tf.exp(net_out[1])+0.05)
 
             # Segmentation
             output_prob = self.multitask_param.output_prob
