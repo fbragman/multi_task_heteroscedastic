@@ -14,6 +14,19 @@ from scipy import ndimage
 from six import string_types
 
 
+def traverse_nested(input_lists, types=(list, tuple)):
+    """
+    Flatten a nested list or tuple
+    """
+
+    if isinstance(input_lists, types):
+        for input_list in input_lists:
+            for sub_list in traverse_nested(input_list, types=types):
+                yield sub_list
+    else:
+        yield input_lists
+
+
 def list_depth_count(input_list):
     """
     This function count the maximum depth of a nested list (recursively)
@@ -152,6 +165,26 @@ class MorphologyOps(object):
 
     def foreground_component(self):
         return ndimage.label(self.binary_map)
+
+cache={}
+def CachedFunction(func):
+    def decorated(*args, **kwargs):
+        key = (func, args, frozenset(kwargs.items()))
+        if key not in cache:
+            cache[key] = func(*args,**kwargs)
+        return cache[key]
+    return decorated
+
+def CachedFunctionByID(func):
+    def decorated(*args, **kwargs):
+        id_args = tuple(id(a) for a in args)
+        id_kwargs = ((k,id(kwargs[k])) for k in sorted(kwargs.keys()))
+        key = (func, id_args, id_kwargs)
+        if key not in cache:
+            cache[key] = func(*args,**kwargs)
+        return cache[key]
+    return decorated
+
 
 
 class CacheFunctionOutput(object):
@@ -338,3 +371,21 @@ def set_cuda_device(cuda_devices):
     else:
         # using Tensorflow default choice
         pass
+
+
+class ParserNamespace(object):
+    """
+    Parser namespace for representing parsed parameters from config file
+
+    e.g.::
+
+        system_params = ParserNamespace(action='train')
+        action_str = system_params.action
+
+    """
+
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+    def update(self, **kwargs):
+        self.__dict__.update(kwargs)

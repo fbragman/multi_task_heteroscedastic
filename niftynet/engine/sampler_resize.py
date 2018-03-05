@@ -55,8 +55,7 @@ class ResizeSampler(Layer, InputBatchQueueRunner):
         self._create_queue_and_ops(self.window,
                                    enqueue_size=1,
                                    dequeue_size=batch_size)
-        tf.logging.info("initialised sampler output %s "
-                        " [-1 for dynamic size]", self.window.shapes)
+        tf.logging.info("initialised sampler output %s ", self.window.shapes)
 
     def layer_op(self, *args, **kwargs):
         """
@@ -98,7 +97,8 @@ class ResizeSampler(Layer, InputBatchQueueRunner):
                     image_shape = image_shapes[name]
                     window_shape = static_window_shapes[name]
 
-                    if image_shape == window_shape:
+                    if (image_shape == window_shape or
+                            interp_orders[name][0] < 0):
                         # already in the same shape
                         image_window = data[name]
                     else:

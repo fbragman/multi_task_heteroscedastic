@@ -48,6 +48,15 @@ def __add_regression_args(parser):
         type=int,
         default=0)
 
+    parser.add_argument(
+        "--error_map",
+        metavar='',
+        help="Set whether to output the regression error maps (the maps "
+             "will be stored in $model_dir/error_maps; the error maps "
+             "can be used for window sampling).",
+        type=str2boolean,
+        default=False)
+
     from niftynet.application.regression_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
@@ -220,6 +229,13 @@ def __add_segmentation_args(parser):
         default=True
     )
 
+    parser.add_argument(
+        "--evaluation_units",
+        help="Compute per-component metrics for per label or per connected "
+             "component. [foreground, label, or cc]",
+        choices = ['foreground', 'label', 'cc'],
+        default='foreground')
+
     from niftynet.application.segmentation_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
@@ -241,6 +257,35 @@ def __add_gan_args(parser):
         default=10)
 
     from niftynet.application.gan_application import SUPPORTED_INPUT
+    parser = add_input_name_args(parser, SUPPORTED_INPUT)
+    return parser
+
+
+def __add_classification_args(parser):
+    parser.add_argument(
+        "--num_classes",
+        metavar='',
+        help="Set number of classes",
+        type=int,
+        default=-1)
+
+    parser.add_argument(
+        "--output_prob",
+        metavar='',
+        help="[Inference only] whether to output multi-class probabilities",
+        type=str2boolean,
+        default=False)
+
+    parser.add_argument(
+        "--label_normalisation",
+        metavar='',
+        help="whether to map unique labels in the training set to "
+             "consecutive integers (the smallest label will be  mapped to 0)",
+        type=str2boolean,
+        default=False)
+
+
+    from niftynet.application.classification_application import SUPPORTED_INPUT
     parser = add_input_name_args(parser, SUPPORTED_INPUT)
     return parser
 
@@ -271,10 +316,26 @@ def __add_autoencoder_args(parser):
     return parser
 
 
+def __add_registration_args(parser):
+    parser.add_argument(
+        "--label_normalisation",
+        metavar='',
+        help="whether to map unique labels in the training set to "
+             "consecutive integers (the smallest label will be  mapped to 0)",
+        type=str2boolean,
+        default=False)
+
+    from niftynet.application.label_driven_registration import SUPPORTED_INPUT
+    parser = add_input_name_args(parser, SUPPORTED_INPUT)
+    return parser
+
+
 SUPPORTED_ARG_SECTIONS = {
     'REGRESSION': __add_regression_args,
     'SEGMENTATION': __add_segmentation_args,
+    'CLASSIFICATION': __add_classification_args,
     'AUTOENCODER': __add_autoencoder_args,
     'GAN': __add_gan_args,
     'MULTITASK': __add_multitask_args,
+    'REGISTRATION': __add_registration_args
 }
