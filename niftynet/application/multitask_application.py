@@ -32,6 +32,9 @@ from niftynet.layer.rand_spatial_scaling import RandomSpatialScalingLayer
 from niftynet.layer.discrete_label_normalisation import \
     DiscreteLabelNormalisationLayer
 
+#TODO - make consistent with other new applications
+#TODO - generalise to any multi-task
+
 import numpy as np
 
 SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight', 'sampler'])
@@ -45,7 +48,7 @@ class MultiTaskApplication(BaseApplication):
         BaseApplication.__init__(self)
         tf.logging.info('starting multi-task application')
 
-        self.is_training = is_training
+        #self.is_training = is_training
 
         self.net_param = net_param
         self.action_param = action_param
