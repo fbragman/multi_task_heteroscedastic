@@ -32,9 +32,6 @@ from niftynet.layer.rand_spatial_scaling import RandomSpatialScalingLayer
 from niftynet.layer.discrete_label_normalisation import \
     DiscreteLabelNormalisationLayer
 
-#TODO - make consistent with other new applications
-#TODO - generalise to any multi-task
-
 import numpy as np
 
 SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight', 'sampler'])
@@ -248,7 +245,7 @@ class MultiTaskApplication(BaseApplication):
             image = tf.cast(data_dict['image'], tf.float32)
             net_out = self.net(image, is_training=self.is_training)
 
-            if self.multitask_param.noise_model == 'homo':
+            if self.multitask_param.noise_model == 'homo' or self.multitask_param.noise_model is None:
                 net_out_task_1 = net_out[0]
                 net_out_task_2 = net_out[1]
             elif self.multitask_param.noise_model == 'hetero':
@@ -256,9 +253,6 @@ class MultiTaskApplication(BaseApplication):
                 noise_out_task_1 = net_out[1]
                 net_out_task_2 = net_out[2]
                 noise_out_task_2 = net_out[3]
-            elif self.multitask_param.noise_model == 'single-hetero':
-                net_out_task_1 = net_out[0]
-                noise_out_task_1 = net_out[1]
 
             with tf.name_scope('Optimiser'):
                 optimiser_class = OptimiserFactory.create(
@@ -281,25 +275,18 @@ class MultiTaskApplication(BaseApplication):
                 prediction_task_1 = crop_layer(net_out_task_1)
                 prediction_task_2 = crop_layer(net_out_task_2)
 
-            elif self.multitask_param.noise_model == 'single-hetero':
 
-                prediction_task_1 = crop_layer(net_out_task_1)
-                pred_noise_task_1 = crop_layer(noise_out_task_1)
-
-
-            if self.multitask_param.noise_model == 'single-hetero':
-                ground_truth_task_1 = crop_layer(data_dict.get('output_1', None))
-            else:
-                ground_truth_task_1 = crop_layer(data_dict.get('output_1', None))
-                ground_truth_task_2 = crop_layer(data_dict.get('output_2', None))
-                # Make sure ground truth is int32/int64
-                ground_truth_task_2 = tf.to_int64(ground_truth_task_2)
+            ground_truth_task_1 = crop_layer(data_dict.get('output_1', None))
+            ground_truth_task_2 = crop_layer(data_dict.get('output_2', None))
+            # Make sure ground truth is int32/int64
+            ground_truth_task_1 = tf.to_int64(ground_truth_task_1)
+            ground_truth_task_2 = tf.to_int64(ground_truth_task_2)
 
             weight_map = None if data_dict.get('weight', None) is None \
                 else crop_layer(data_dict.get('weight', None))
 
             # Set up the noise model
-            if self.multitask_param.noise_model == 'homo':
+            if self.multitask_param.noise_model == 'homo' or self.multitask_param.noise_model is None:
 
                 loss_func_task_1 = LossFunction_Reg(loss_type=self.multitask_param.loss_1)
                 loss_func_task_2 = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
@@ -329,51 +316,33 @@ class MultiTaskApplication(BaseApplication):
                                                     noise=pred_noise_task_2,
                                                     weight_map=weight_map)
 
-            elif self.multitask_param.noise_model == 'single-hetero':
-
-                if self.multitask_param.loss_1 == 'L2Loss':
-                    loss_func_task_1 = LossFunction_HeteroReg(loss_type=self.multitask_param.loss_1)
-                    data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
-                                                        ground_truth=ground_truth_task_1,
-                                                        noise=pred_noise_task_1,
-                                                        weight_map=weight_map)
-                elif self.multitask_param.loss_1 == 'ScaledApproxSoftMax':
-                    loss_func_task_1 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[0],
-                                                              loss_type=self.multitask_param.loss_1)
-                    ground_truth_task_1 = tf.to_int64(ground_truth_task_1)
-                    data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
-                                                        ground_truth=ground_truth_task_1,
-                                                        noise=pred_noise_task_1)
-
             # Set up the multi-task model
             # Note: if using hetero - only summed_loss should be really used
             #       homosecedatic_1 should only be used with noise_model = 'homo'
             multitask_loss = self.multitask_param.multitask_loss
-            if self.multitask_param.noise_model != 'single-hetero':
-                mt_loss_task = LossFunction_MT(multitask_loss)
+            mt_loss_task = LossFunction_MT(multitask_loss)
 
-            if self.multitask_param.noise_model == 'single-hetero':
-                data_loss = data_loss_task_1
+            if multitask_loss == 'summed_loss':
+                data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, None, None)
+            elif multitask_loss == 'weighted_loss':
+                # weighted sum
+                w_1 = tf.get_variable('sigma_1',
+                                      initializer=tf.constant(self.multitask_param.loss_sigma_1),
+                                      trainable=False)
+                w_2 = tf.get_variable('sigma_2',
+                                      initializer=tf.constant(self.multitask_param.loss_sigma_2),
+                                      trainable=False)
+                data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, w_1, w_2)
+            elif multitask_loss == 'homoscedatic_1':
+                w_1 = tf.get_variable('sigma_1',
+                                      initializer=self.multitask_param.loss_sigma_1, trainable=True)
+                w_2 = tf.get_variable('sigma_2',
+                                      initializer=self.multitask_param.loss_sigma_2, trainable=True)
+                data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, w_1, w_2)
 
-            else:
-
-                if multitask_loss == 'summed_loss':
-                    data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, None, None)
-                elif multitask_loss == 'weighted_loss':
-                    # weighted sum
-                    w_1 = tf.get_variable('sigma_1',
-                                          initializer=tf.constant(self.multitask_param.loss_sigma_1),
-                                          trainable=False)
-                    w_2 = tf.get_variable('sigma_2',
-                                          initializer=tf.constant(self.multitask_param.loss_sigma_2),
-                                          trainable=False)
-                    data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, w_1, w_2)
-                elif multitask_loss == 'homoscedatic_1':
-                    w_1 = tf.get_variable('sigma_1',
-                                          initializer=self.multitask_param.loss_sigma_1, trainable=True)
-                    w_2 = tf.get_variable('sigma_2',
-                                          initializer=self.multitask_param.loss_sigma_2, trainable=True)
-                    data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, w_1, w_2)
+            # TODO  Backpropagation conditional based on which input is in the batch
+            ## Needs to be compatible when various inputs in batch are from different sets
+            ## e.g. set 1 is kidney segmentation dataset and set 2 is liver segmentation dataset
 
             reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
