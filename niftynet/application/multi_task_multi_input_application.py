@@ -275,7 +275,6 @@ class MultiTaskApplication(BaseApplication):
                 prediction_task_1 = crop_layer(net_out_task_1)
                 prediction_task_2 = crop_layer(net_out_task_2)
 
-
             ground_truth_task_1 = crop_layer(data_dict.get('output_1', None))
             ground_truth_task_2 = crop_layer(data_dict.get('output_2', None))
             # Make sure ground truth is int32/int64
