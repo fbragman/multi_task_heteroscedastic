@@ -34,10 +34,10 @@ from niftynet.layer.discrete_label_normalisation import \
 
 import numpy as np
 
-SUPPORTED_INPUT = set(['image', 'output_1', 'output_2', 'weight', 'sampler'])
+SUPPORTED_INPUT = set(['image', 'image_label', 'output_1', 'output_2', 'weight', 'sampler'])
 
 
-class MultiTaskApplication(BaseApplication):
+class MultiInputApplication(BaseApplication):
     REQUIRED_CONFIG_SECTION = 'MULTITASK'
 
     # Initialise the class/application
@@ -85,6 +85,8 @@ class MultiTaskApplication(BaseApplication):
                 reader = ImageReader(SUPPORTED_INPUT)
                 reader.initialise(data_param, task_param, file_list)
                 self.readers.append(reader)
+            """
+            """
         else:
             inference_reader = ImageReader(['image'])
             file_list = data_partitioner.inference_files
@@ -242,7 +244,13 @@ class MultiTaskApplication(BaseApplication):
             else:
                 data_dict = switch_sampler(for_training=True)
 
+            # batch of images
             image = tf.cast(data_dict['image'], tf.float32)
+            # batch of labels [0/1] depending on organ
+            # label 0 --> branch 1 output
+            # label 1 --> branch 2 output
+            image_label = tf.cast(data_dict['image_label'], tf.float32)
+
             net_out = self.net(image, is_training=self.is_training)
 
             if self.multitask_param.noise_model == 'homo' or self.multitask_param.noise_model is None:
@@ -284,47 +292,22 @@ class MultiTaskApplication(BaseApplication):
             weight_map = None if data_dict.get('weight', None) is None \
                 else crop_layer(data_dict.get('weight', None))
 
-            # Set up the noise model
-            if self.multitask_param.noise_model == 'homo' or self.multitask_param.noise_model is None:
+            data_loss_task_1, data_loss_task_2 = self.create_loss_functions(prediction_task_1,
+                                                                            prediction_task_2,
+                                                                            ground_truth_task_1,
+                                                                            ground_truth_task_2,
+                                                                            input_flag=image_label,
+                                                                            noise_task_1=pred_noise_task_1,
+                                                                            noise_task_2=pred_noise_task_2)
 
-                loss_func_task_1 = LossFunction_Reg(loss_type=self.multitask_param.loss_1)
-                loss_func_task_2 = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
-                                                    loss_type=self.multitask_param.loss_2)
-
-                data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
-                                                    ground_truth=ground_truth_task_1,
-                                                    weight_map=weight_map)
-
-                data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
-                                                    ground_truth=ground_truth_task_2,
-                                                    weight_map=weight_map)
-
-            elif self.multitask_param.noise_model == 'hetero':
-
-                loss_func_task_1 = LossFunction_HeteroReg(loss_type=self.multitask_param.loss_1)
-                loss_func_task_2 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[1],
-                                                          loss_type=self.multitask_param.loss_2)
-
-                data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
-                                                    ground_truth=ground_truth_task_1,
-                                                    noise=pred_noise_task_1,
-                                                    weight_map=weight_map)
-
-                data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
-                                                    ground_truth=ground_truth_task_2,
-                                                    noise=pred_noise_task_2,
-                                                    weight_map=weight_map)
-
-            # Set up the multi-task model
-            # Note: if using hetero - only summed_loss should be really used
-            #       homosecedatic_1 should only be used with noise_model = 'homo'
             multitask_loss = self.multitask_param.multitask_loss
             mt_loss_task = LossFunction_MT(multitask_loss)
 
             if multitask_loss == 'summed_loss':
+                # Summed for naive or heteroscedastic
                 data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, None, None)
             elif multitask_loss == 'weighted_loss':
-                # weighted sum
+                # Weighted sum
                 w_1 = tf.get_variable('sigma_1',
                                       initializer=tf.constant(self.multitask_param.loss_sigma_1),
                                       trainable=False)
@@ -332,16 +315,13 @@ class MultiTaskApplication(BaseApplication):
                                       initializer=tf.constant(self.multitask_param.loss_sigma_2),
                                       trainable=False)
                 data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, w_1, w_2)
-            elif multitask_loss == 'homoscedatic_1':
+            elif multitask_loss == 'homo':
+                # Homoscedastic where w_1/w_2 are learned weights
                 w_1 = tf.get_variable('sigma_1',
                                       initializer=self.multitask_param.loss_sigma_1, trainable=True)
                 w_2 = tf.get_variable('sigma_2',
                                       initializer=self.multitask_param.loss_sigma_2, trainable=True)
                 data_loss = mt_loss_task(data_loss_task_1, data_loss_task_2, w_1, w_2)
-
-            # TODO  Backpropagation conditional based on which input is in the batch
-            ## Needs to be compatible when various inputs in batch are from different sets
-            ## e.g. set 1 is kidney segmentation dataset and set 2 is liver segmentation dataset
 
             reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
@@ -361,7 +341,7 @@ class MultiTaskApplication(BaseApplication):
                 var=data_loss, name='Loss',
                 average_over_devices=False, collection=CONSOLE)
 
-            if multitask_loss == 'homoscedatic_1':
+            if multitask_loss == 'homo':
                 # collecting output variables
                 outputs_collector.add_to_collection(
                     var=tf.convert_to_tensor(w_1), name='w_1',
@@ -550,6 +530,91 @@ class MultiTaskApplication(BaseApplication):
             init_aggregator = \
                 self.SUPPORTED_SAMPLING[self.net_param.window_sampling][2]
             init_aggregator()
+
+    def create_loss_functions(self, prediction_task_1, prediction_task_2,
+                                    ground_truth_task_1, ground_truth_task_2,
+                                    input_flag=None,
+                                    noise_task_1=None, noise_task_2=None,
+                                    weight_map=None):
+        """
+        Create loss functions to use
+        :param prediction_task_1:
+        :param prediction_task_2:
+        :param ground_truth_task_1:
+        :param ground_truth_task_2:
+        :param noise_task_1:
+        :param noise_task_2:
+        :param weight_map:
+        :return:
+        """
+
+        task_1 = self.multitask_param.task_1
+        task_2 = self.multitask_param.task_2
+        noise_model = self.multitask_param.noise_model
+
+        task_1_flag = None
+        task_2_flag = None
+        if input_flag is not None:
+            # 1 where input_flag == 0
+            task_1_flag = 1-input_flag
+            # 1 where input_flag == 1
+            task_2_flag = input_flag
+
+
+        # Set up the noise model
+        if noise_model == 'homo' or noise_model is None:
+
+            if task_1 is 'regression':
+                loss_func_task_1 = LossFunction_Reg(loss_type=self.multitask_param.loss_1)
+            elif task_1 is 'segmentation':
+                loss_func_task_1 = LossFunction_Seg(n_class=self.multitask_param.num_classes[0],
+                                                    loss_type=self.multitask_param.loss_1)
+            if task_2 is 'regression':
+                loss_func_task_2 = LossFunction_Reg(loss_type=self.multitask_param.loss_2)
+            elif task_2 is 'segmentation':
+                loss_func_task_2 = LossFunction_Seg(n_class=self.multitask_param.num_classes[1],
+                                                    loss_type=self.multitask_param.loss_2)
+
+            data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
+                                                ground_truth=ground_truth_task_1,
+                                                task_deleter=task_1_flag,
+                                                weight_map=weight_map)
+
+            data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
+                                                ground_truth=ground_truth_task_2,
+                                                task_deleter=task_2_flag,
+                                                weight_map=weight_map)
+
+        elif noise_model == 'hetero':
+
+            if task_1 is 'regression':
+                loss_func_task_1 = LossFunction_HeteroReg(loss_type=self.multitask_param.loss_1)
+            elif task_1 is 'segmentation':
+                loss_func_task_1 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[0],
+                                                    loss_type=self.multitask_param.loss_1)
+            if task_2 is 'regression':
+                loss_func_task_2 = LossFunction_HeteroReg(loss_type=self.multitask_param.loss_2)
+            elif task_2 is 'segmentation':
+                loss_func_task_2 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[1],
+                                                    loss_type=self.multitask_param.loss_2)
+
+            data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
+                                                ground_truth=ground_truth_task_1,
+                                                noise=noise_task_1,
+                                                task_deleter=input_flag,
+                                                weight_map=weight_map)
+
+            data_loss_task_2 = loss_func_task_2(prediction=prediction_task_2,
+                                                ground_truth=ground_truth_task_2,
+                                                noise=noise_task_2,
+                                                task_deleter=input_flag,
+                                                weight_map=weight_map)
+        else:
+
+            data_loss_task_1 = None
+            data_loss_task_2 = None
+
+        return data_loss_task_1, data_loss_task_2
 
     def interpret_output(self, batch_output):
         if not self.is_training:

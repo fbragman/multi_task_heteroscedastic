@@ -467,6 +467,8 @@ class ApplicationDriver(object):
         def add_gradient(iter_msg):
             """ Event handler to add the backpropagation update.
             iter_msg is an IterationMessage object """
+            # if iter_msg.current_iter < 100:
+            #     iter_msg.ops_to_run['gradients'] = self.app.trunk_gradient_op
             iter_msg.ops_to_run['gradients'] = self.app.gradient_op
         self.pre_train_iter.connect(add_gradient)
         self._loop(self.interleaved_iteration_generator(), sess, loop_status)

@@ -200,6 +200,11 @@ class BaseApplication(with_metaclass(SingletonApplication, object)):
         if grad_list_depth == 3:
             # nested depth 3 means: gradients list is nested in terms of:
             # list of networks -> list of network variables
+            # trunk_gradients = [(var, grad) for var, grad in gradients if 'task_1' not in var.name and 'task_2' not in var.name]
+            # task_1_gradients = [(var, grad) for var, grad in gradients if 'task_1' in var.name]
+            # task_2_gradients = [(var, grad) for var, grad in gradients if 'task_2' in var.name]
+            #self.trunk_gradient_op = [self.optimiser.apply_gradients(grad)
+                                #for grad in trunk_gradients]
             self.gradient_op = [self.optimiser.apply_gradients(grad)
                                 for grad in gradients]
         elif grad_list_depth == 2:

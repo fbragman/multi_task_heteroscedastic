@@ -95,6 +95,14 @@ def __add_multitask_args(parser):
         default='L2Loss')
 
     parser.add_argument(
+        "--task_1",
+        metavar='TYPE_STR')
+
+    parser.add_argument(
+        "--task_2",
+        metavar='TYPE_STR')
+
+    parser.add_argument(
         "--multitask_loss",
         metavar='TYPE_STR',
         help="[Training only] type of loss function for multi-task application",
