@@ -307,6 +307,12 @@ class MultiTaskApplication(BaseApplication):
                                                                             ground_truth_task_2,
                                                                             noise_task_1=pred_noise_task_1,
                                                                             noise_task_2=pred_noise_task_2)
+
+            self.tensorboard_image_output_creator(outputs_collector,
+                                                  prediction_task_1, prediction_task_2,
+                                                  ground_truth_task_1, ground_truth_task_2,
+                                                  noise_task_1=pred_noise_task_1, noise_task_2=pred_noise_task_2)
+
             # Set up the multi-task model
             # Note: if using hetero - only summed_loss should be really used
             #       homosecedatic_1 should only be used with noise_model = 'homo'
@@ -389,11 +395,6 @@ class MultiTaskApplication(BaseApplication):
                     var=data_loss_task_2_val, name='Original_cross_entropy',
                     average_over_devices=True, summary_type='scalar',
                     collection=TF_SUMMARIES)
-
-            self.tensorboard_image_output_creator(outputs_collector,
-                                                  prediction_task_1, prediction_task_2,
-                                                  ground_truth_task_1, ground_truth_task_2,
-                                                  noise_task_1=pred_noise_task_1, noise_task_2=pred_noise_task_2)
 
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
