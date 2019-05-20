@@ -4,7 +4,6 @@ Loss functions for multi-class heteroscedatic segmentation
 """
 from __future__ import absolute_import, print_function, division
 
-import numpy as np
 import tensorflow as tf
 
 from niftynet.engine.application_factory import LossHeteroSegmentationFactory
@@ -39,6 +38,7 @@ class LossFunction(Layer):
                  prediction,
                  noise,
                  ground_truth,
+                 task_deleter=None,
                  weight_map=None,
                  T=None):
         """
@@ -51,10 +51,13 @@ class LossFunction(Layer):
 
         :param prediction: input will be reshaped into
             ``(batch_size, N_voxels, num_classes)``
-        :param ground_truth: input will be reshaped into
-            ``(batch_size, N_voxels, ...)``
         :param noise: input will be reshaped into
             ``(batch_size, N_voxels, ...)``
+        :param ground_truth: input will be reshaped into
+            ``(batch_size, N_voxels, ...)``
+        :param task_deleter: input is size ``(batch_size, 1)`` which coincides with
+            a set of scalar flags that switch off loss for a particular subject
+
         :param T: stochastic ``T`` passes to calculate expected log-likelihood
         :return:
         """
@@ -137,7 +140,7 @@ def scaled_softmax(prediction, ground_truth, noise, T, num_classes):
     return tf.reduce_mean(sm)
 
 
-def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes, weight_map=None):
+def scaled_approx_softmax(prediction, ground_truth, noise, constant=0.05, weight_map=None):
     """
     Approximation to log-likelihood of scaled softmax as in Kendall
     Equation (10) from Kendall et a. 2017
@@ -154,16 +157,15 @@ def scaled_approx_softmax(prediction, ground_truth, noise, T, num_classes, weigh
 
     :param prediction: logits (before softmax)
     :param ground_truth: segmentation ground truth
-    :param noise: modelled noise
-    :param T: (not used)
-    :param num_classes: number of classes
+    :param constant: numerical constant to help training
+    :param weight_map: weight map
     :return:
     """
 
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=prediction, labels=ground_truth)
 
-    small_constant = 0.05
+    small_constant = constant
     if small_constant > 0.:
         noise = tf.log(tf.exp(noise) + small_constant)
 
