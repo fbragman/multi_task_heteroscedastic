@@ -251,6 +251,8 @@ class MultiTaskApplication(BaseApplication):
             if self.multitask_param.noise_model == 'homo':
                 net_out_task_1 = net_out[0]
                 net_out_task_2 = net_out[1]
+                noise_out_task_1 = None
+                noise_out_task_2 = None
             elif self.multitask_param.noise_model == 'hetero':
                 net_out_task_1 = net_out[0]
                 noise_out_task_1 = net_out[1]
@@ -259,6 +261,8 @@ class MultiTaskApplication(BaseApplication):
             elif self.multitask_param.noise_model == 'single-hetero':
                 net_out_task_1 = net_out[0]
                 noise_out_task_1 = net_out[1]
+                net_out_task_2 = None
+                noise_out_task_2 = None
 
             with tf.name_scope('Optimiser'):
                 optimiser_class = OptimiserFactory.create(
@@ -385,6 +389,11 @@ class MultiTaskApplication(BaseApplication):
                     var=data_loss_task_2_val, name='Original_cross_entropy',
                     average_over_devices=True, summary_type='scalar',
                     collection=TF_SUMMARIES)
+
+            self.tensorboard_image_output_creator(outputs_collector,
+                                                  prediction_task_1, prediction_task_2,
+                                                  ground_truth_task_1, ground_truth_task_2,
+                                                  noise_task_1=pred_noise_task_1, noise_task_2=pred_noise_task_2)
 
             outputs_collector.add_to_collection(
                 var=data_loss, name='Loss',
@@ -541,6 +550,71 @@ class MultiTaskApplication(BaseApplication):
                 self.SUPPORTED_SAMPLING[self.net_param.window_sampling][2]
             init_aggregator()
 
+    def tensorboard_image_output_creator(self, outputs_collector,
+                                         prediction_task_1, prediction_task_2,
+                                         ground_truth_task_1, ground_truth_task_2,
+                                         noise_task_1=None, noise_task_2=None):
+        """
+        Output gt/prediction/noise to tensorboard IMAGE summaries
+        :param prediction_task_1:
+        :param prediction_task_2:
+        :param ground_truth_task_1:
+        :param ground_truth_task_2:
+        :param noise_task_1:
+        :param noise_task_2:
+        :return:
+        """
+
+        def min_max_scaling(img):
+            """
+            Min-max scaling for output to 255-0 range
+            :param img:
+            :return:
+            """
+            return 255 * (img - tf.reduce_min(img)) / (tf.reduce_max(img) - tf.reduce_min(img))
+
+        def add_to_collector(img, name):
+            """
+            Add to collector
+            :param img:
+            :param name:
+            :return:
+            """
+            import math
+            outputs_collector.add_to_collection(
+                var=tf.contrib.image.rotate(min_max_scaling(img), math.pi / 2),
+                name=name, average_over_devices=True, summary_type='image',
+                collection=TF_SUMMARIES)
+
+        task_1 = self.multitask_param.task_1
+        task_2 = self.multitask_param.task_2
+        noise_model = self.multitask_param.noise_model
+
+        if noise_model is 'homo':
+
+            add_to_collector(prediction_task_1, task_1)
+            add_to_collector(prediction_task_2, task_2)
+
+            add_to_collector(ground_truth_task_1, task_1 + '_gt')
+            add_to_collector(ground_truth_task_2, task_2 + '_gt')
+
+        elif noise_model is 'hetero':
+
+            add_to_collector(prediction_task_1, task_1)
+            add_to_collector(noise_task_1, task_1 + '_noise')
+            add_to_collector(prediction_task_2, task_2)
+            add_to_collector(noise_task_2, task_2 + '_noise')
+
+            add_to_collector(ground_truth_task_1, task_1 + '_gt')
+            add_to_collector(ground_truth_task_2, task_2 + '_gt')
+
+        elif noise_model is 'single-hetero':
+
+            add_to_collector(prediction_task_1, task_1)
+            add_to_collector(noise_task_1, task_1 + '_noise')
+
+            add_to_collector(ground_truth_task_1, task_1 + '_gt')
+
     def create_loss_functions(self, prediction_task_1, prediction_task_2,
                                     ground_truth_task_1, ground_truth_task_2,
                                     noise_task_1=None, noise_task_2=None,
@@ -605,6 +679,21 @@ class MultiTaskApplication(BaseApplication):
                                                 ground_truth=ground_truth_task_2,
                                                 noise=noise_task_2,
                                                 weight_map=weight_map)
+
+        elif noise_model == 'single-hetero':
+
+            if task_1 is 'regression':
+                loss_func_task_1 = LossFunction_HeteroReg(loss_type=self.multitask_param.loss_1)
+            elif task_1 is 'segmentation':
+                loss_func_task_1 = LossFunction_HeteroSeg(n_class=self.multitask_param.num_classes[0],
+                                                          loss_type=self.multitask_param.loss_1)
+
+            data_loss_task_1 = loss_func_task_1(prediction=prediction_task_1,
+                                                ground_truth=ground_truth_task_1,
+                                                noise=noise_task_1,
+                                                weight_map=weight_map)
+            data_loss_task_2 = None
+
         else:
 
             data_loss_task_1 = None
